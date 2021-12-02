@@ -2,42 +2,37 @@ import pandas as pd
 import sys
 
 
+def read_df(file):
+    df = pd.read_csv(file, header=None, delimiter=" ", names=["direction", "magnitude"])
+
+    # add id as a "time" column
+    df = df.rename_axis(index="time").reset_index()
+
+    return df
+
+
 def day2a(file):
-
-    df = pd.read_csv(file, header=None, delimiter=" ", names=["direction", "units"])
-
+    df = read_df(file)
     total = df.groupby("direction").sum()
     total_mult = total.loc["forward"] * (total.loc["down"] - total.loc["up"])
-    return total_mult.units
+    return total_mult.magnitude
 
 
 def day2b(file):
+    df = read_df(file)
 
-    df = pd.read_csv(file, header=None, delimiter=" ", names=["direction", "units"])
-    down = df["direction"] == "down"
-    up = df["direction"] == "up"
-    forward = df["direction"] == "forward"
+    # each direction becomes its own column, values either the magnitude
+    # or 0 if time step has no change in this direction
+    df = df.pivot_table(values="magnitude", index="time", columns="direction", fill_value=0)
 
-    df["aim_diff"] = 0
-
-    # down X increases your aim by X units
-    df.loc[down, "aim_diff"] = df[down].units
-
-    # up X decreases your aim by X units
-    df.loc[up, "aim_diff"] = -df[up].units
-
-    df["aim"] = df.aim_diff.cumsum()
+    df["aim"] = df.down.cumsum() - df.up.cumsum()
 
     # forward X does two things
     # - It increases your horizontal position by X units
-    df["horiz_pos_diff"] = 0
-    df.loc[forward, "horiz_pos_diff"] = df[forward].units
-    df["horiz_pos"] = df.horiz_pos_diff.cumsum()
+    df["horiz_pos"] = df.forward.cumsum()
 
     # - It increases your depth by your aim multiplied by X
-    df["depth_diff"] = 0
-    df.loc[forward, "depth_diff"] = df[forward].aim * df[forward].units
-    df["depth"] = df.depth_diff.cumsum()
+    df["depth"] = (df.forward * df.aim).cumsum()
 
     # What do you get if you multiply your final horizontal position by your final depth?
     last_state = df.iloc[-1]
