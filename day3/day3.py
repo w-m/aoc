@@ -1,9 +1,14 @@
 import pandas as pd
+from funcy import print_durations
 
 
 def read_df(file):
     df = pd.read_csv(file, dtype=str, header=None, names=["power"])
-    df = df.power.apply(list).apply(pd.Series).astype(int)
+
+    # .apply(pd.Series) is quite slow (100 ms for input.txt)
+    # df = df.power.apply(list).apply(pd.Series).astype(int)
+
+    df = pd.DataFrame(df.power.apply(list).tolist()).astype(int)
     return df
 
 
@@ -12,6 +17,7 @@ def bool_series_to_dec(series):
     return int(binary_string, 2)
 
 
+@print_durations
 def day3a(file):
 
     df = read_df(file)
@@ -44,6 +50,7 @@ def life_support_rating(df, keep_bit_criterion):
     return bool_series_to_dec(df.iloc[0])
 
 
+@print_durations
 def day3b(file):
 
     df = read_df(file).astype(bool)
@@ -61,10 +68,13 @@ def day3b(file):
     return oxy * co2
 
 
-assert day3a("test_input.txt") == 198
-print(f"Day 3a: {day3a('input.txt')}")
-assert day3a("input.txt") == 845186
+if __name__ == "__main__":
 
-assert day3b("test_input.txt") == 230
-print(f"Day 3b: {day3b('input.txt')}")
-assert day3b("input.txt") == 4636702
+    print(f"Day 3a: {day3a('input.txt')}")
+    print(f"Day 3b: {day3b('input.txt')}")
+
+    assert day3a("test_input.txt") == 198
+    assert day3b("test_input.txt") == 230
+
+    assert day3a("input.txt") == 845186
+    assert day3b("input.txt") == 4636702
