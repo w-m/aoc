@@ -7,58 +7,57 @@ def read_df(file):
     return df
 
 
+def bool_series_to_dec(series):
+    binary_string = series.astype(int).astype(str).str.cat()
+    return int(binary_string, 2)
+
+
 def day3a(file):
 
     df = read_df(file)
     # Each bit in the gamma rate can be determined by finding the most common bit
     # in the corresponding position of all numbers in the diagnostic report
     most_freq = df.apply(pd.value_counts).idxmax()
-    gamma_rate = int(most_freq.astype(str).str.cat(), 2)
+    gamma_rate = bool_series_to_dec(most_freq)
 
     # epsilon rate is calculated [by] the least common bit from each position
     least_freq = (~most_freq.astype(bool)).astype(int)
-    epsilon_rate = int(least_freq.astype(str).str.cat(), 2)
+    epsilon_rate = bool_series_to_dec(least_freq)
 
     return gamma_rate * epsilon_rate
+
+
+def life_support_rating(df, keep_bit_criterion):
+
+    for col in df.columns:
+
+        # determine the most common value (0 or 1) in the current bit position
+        vc = df[col].value_counts()
+
+        # keep rows where value matches the given criterium
+        df = df[df[col] == keep_bit_criterion(vc)]
+
+        # if you only have one number left, stop
+        if len(df) == 1:
+            break
+
+    return bool_series_to_dec(df.iloc[0])
 
 
 def day3b(file):
 
     df = read_df(file).astype(bool)
 
-    for col in df.columns:
+    # 1 if 1 is most common value or when 0 and 1 equally common
+    oxy_val_to_keep = lambda vc: vc[True] >= vc[False]
 
-        # determine the most common value (0 or 1) in the current bit position
-        vc = df[col].value_counts()
+    # 0 if 0 is most common value or when 0 and 1 equally common
+    co2_val_to_keep = lambda vc: not oxy_val_to_keep(vc)
 
-        # If 0 and 1 are equally common, keep values with a 1 in the position being considered
-        select = vc[True] >= vc[False]
-
-        df = df[df[col] == select]
-
-        if len(df) == 1:
-            break
-
-    oxy = int("".join(df.astype(int).astype(str).values[0]), 2)
-
-    df = read_df(file).astype(bool)
-
-    for col in df.columns:
-
-        # determine the most common value (0 or 1) in the current bit position
-        vc = df[col].value_counts()
-
-        select = ~(vc[False] <= vc[True])
-
-        df = df[df[col] == select]
-
-        if len(df) == 1:
-            break
-
-    co2 = int("".join(df.astype(int).astype(str).values[0]), 2)
+    oxy = life_support_rating(df, oxy_val_to_keep)
+    co2 = life_support_rating(df, co2_val_to_keep)
 
     # multiplying the oxygen generator rating by the CO2 scrubber rating
-
     return oxy * co2
 
 
@@ -68,3 +67,4 @@ assert day3a("input.txt") == 845186
 
 assert day3b("test_input.txt") == 230
 print(f"Day 3b: {day3b('input.txt')}")
+assert day3b("input.txt") == 4636702
