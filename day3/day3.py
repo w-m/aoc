@@ -27,7 +27,7 @@ def day3a(file):
     gamma_rate = bool_series_to_dec(most_freq)
 
     # epsilon rate is calculated [by] the least common bit from each position
-    least_freq = (~most_freq.astype(bool)).astype(int)
+    least_freq = ~most_freq.astype(bool)
     epsilon_rate = bool_series_to_dec(least_freq)
 
     return gamma_rate * epsilon_rate
