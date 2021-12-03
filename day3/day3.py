@@ -13,11 +13,11 @@ def day3a(file):
     # Each bit in the gamma rate can be determined by finding the most common bit
     # in the corresponding position of all numbers in the diagnostic report
     most_freq = df.apply(pd.value_counts).idxmax()
-    gamma_rate = int("".join(most_freq.astype(str)), 2)
+    gamma_rate = int(most_freq.astype(str).str.cat(), 2)
 
     # epsilon rate is calculated [by] the least common bit from each position
     least_freq = (~most_freq.astype(bool)).astype(int)
-    epsilon_rate = int("".join(least_freq.astype(str)), 2)
+    epsilon_rate = int(least_freq.astype(str).str.cat(), 2)
 
     return gamma_rate * epsilon_rate
 
