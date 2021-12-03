@@ -12,15 +12,14 @@ def day3a(file):
     df = read_df(file)
     # Each bit in the gamma rate can be determined by finding the most common bit
     # in the corresponding position of all numbers in the diagnostic report
-    most_freq = df.apply(lambda x: pd.value_counts(x).head(1).index)
+    most_freq = df.apply(pd.value_counts).idxmax()
+    gamma_rate = int("".join(most_freq.astype(str)), 2)
 
-    most_freq_dec = int("".join(most_freq.astype(str).values[0]), 2)
-
+    # epsilon rate is calculated [by] the least common bit from each position
     least_freq = (~most_freq.astype(bool)).astype(int)
+    epsilon_rate = int("".join(least_freq.astype(str)), 2)
 
-    least_freq_dec = int("".join(least_freq.astype(str).values[0]), 2)
-
-    return most_freq_dec * least_freq_dec
+    return gamma_rate * epsilon_rate
 
 
 def day3b(file):
@@ -65,6 +64,7 @@ def day3b(file):
 
 assert day3a("test_input.txt") == 198
 print(f"Day 3a: {day3a('input.txt')}")
+assert day3a("input.txt") == 845186
 
 assert day3b("test_input.txt") == 230
-# print(f"Day 3b: {day3b('input.txt')}")
+print(f"Day 3b: {day3b('input.txt')}")
