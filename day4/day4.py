@@ -1,21 +1,11 @@
 import numpy as np
-import pandas as pd
 from funcy import print_durations
 
 
 def read_bingo(file):
-
-    with open(file, "r") as f:
-        drawn = f.readline()
-
-    drawn = [int(num) for num in drawn.strip().split(",")]
-
-    boards = pd.read_csv(file, header=None, skiprows=1)
-    boards = boards[0].apply(str.split)
-
-    boards = pd.DataFrame(boards.tolist()).astype(int)
-    boards = boards.values.reshape((-1, 5, 5))
-    return drawn, boards
+    draws = np.loadtxt(file, max_rows=1, delimiter=",", dtype=int)
+    boards = np.loadtxt(file, skiprows=1, dtype=int)
+    return draws, boards.reshape((-1, 5, 5))
 
 
 def eval_bingo(draws, boards):
