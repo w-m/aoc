@@ -34,7 +34,7 @@ def day5(file):
 
         floor[1, ys, xs] += 1
 
-    return (floor[0] > 1).sum(), (floor[1] > 1).sum()
+    return (floor > 1).sum(axis=(1, 2))
 
 
 if __name__ == "__main__":
