@@ -23,14 +23,11 @@ def day5(file):
 
     for ((start_x, start_y), (stop_x, stop_y)) in vent_lines:
 
-        if start_x <= stop_x:
-            xs = np.arange(start_x, stop_x + 1)
-        else:
-            xs = np.arange(start_x, stop_x - 1, -1)
-        if start_y <= stop_y:
-            ys = np.arange(start_y, stop_y + 1)
-        else:
-            ys = np.arange(start_y, stop_y - 1, -1)
+        direction_x = 1 if start_x <= stop_x else -1
+        xs = np.arange(start_x, stop_x + direction_x, direction_x)
+
+        direction_y = 1 if start_y <= stop_y else -1
+        ys = np.arange(start_y, stop_y + direction_y, direction_y)
 
         if start_x == stop_x or start_y == stop_y:
             floor[0, ys, xs] += 1
