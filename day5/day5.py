@@ -18,7 +18,8 @@ def day5(file):
 
     vent_lines = read_vent_lines(file)
 
-    floor = np.zeros((2, vent_lines[:, :, 0].max() + 1, vent_lines[:, :, 1].max() + 1), dtype=np.int64)
+    # dims: 5a/5b (no diags, with diags), y, x
+    floor = np.zeros((2, vent_lines[:, :, 1].max() + 1, vent_lines[:, :, 0].max() + 1), dtype=np.int64)
 
     for ((start_x, start_y), (stop_x, stop_y)) in vent_lines:
 
