@@ -9,29 +9,29 @@ def day7(file):
 
     hpos = np.loadtxt(file, delimiter=",", dtype=int)
 
+    # median is the point with same distance to each half
     best_pos = np.median(hpos).astype(int)
     diffs = hpos - best_pos
+    yield np.abs(diffs).sum()
 
     min_steps = 1e8
 
+    # how to find the exact best point?
+    # coincidentally its the rounded down mean for my data
+    # -> 489, with mean 489.591. how come?
+    # bp2 = np.round(np.mean(hpos)).astype(int)
+
     for bp2 in trange(np.max(hpos)):
 
-        #        bp2 = np.round(np.mean(hpos)).astype(int)
         d2 = np.abs(hpos - bp2)
 
-        steps = 0
-        cur_step = 1
-
-        while d2.any():
-            mask = d2 > 0
-            d2[mask] -= 1
-            steps += cur_step * mask.sum()
-            cur_step += 1
+        # Gauss formula
+        steps = ((d2 * (d2 + 1)) // 2).sum()
 
         if steps < min_steps:
             min_steps = steps
 
-    return np.abs(diffs).sum(), min_steps
+    yield min_steps
 
 
 if __name__ == "__main__":
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     print(f"Day 7b: {puzzle_b}")
 
     assert test_a == 37
-    assert test_b == 26984457539
+    assert test_b == 168
 
     assert puzzle_a == 356179
-    assert puzzle_b == 1653250886439
+    assert puzzle_b == 99788435
