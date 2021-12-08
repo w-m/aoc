@@ -1,8 +1,5 @@
 from funcy import print_durations
-from collections import Counter, defaultdict
-import numpy as np
 import pandas as pd
-from tqdm import trange
 
 
 def day8b(row):
@@ -33,16 +30,16 @@ def day8b(row):
         else:
             digits[2] = len_5_pattern
 
-    for patterns_len_6 in by_len[6]:
+    for len_6_pattern in by_len[6]:
         # 9: len(6) and has signals from (5 + 1)
-        if (digits[5] | digits[1]).issubset(patterns_len_6):
-            digits[9] = patterns_len_6
+        if (digits[5] | digits[1]).issubset(len_6_pattern):
+            digits[9] = len_6_pattern
         # 6: len(6) and has signals frmo (8 - 1) + 5
-        elif ((digits[8] - digits[1]) | digits[5]).issubset(patterns_len_6):
-            digits[6] = patterns_len_6
+        elif ((digits[8] - digits[1]) | digits[5]).issubset(len_6_pattern):
+            digits[6] = len_6_pattern
         # 0: remaining len(6) pattern
         else:
-            digits[0] = patterns_len_6
+            digits[0] = len_6_pattern
 
     # {pattern: digit}
     lookup = {pattern: digit for digit, pattern in digits.items()}
@@ -69,16 +66,16 @@ def day8(file):
 
 if __name__ == "__main__":
     test_a, test_b = day8("test_input.txt")
-    puzzle_a, puzzle_b = day8("input.txt")
+    solution_a, solution_b = day8("input.txt")
 
-    print(f"Day 8a: {test_a}")
-    print(f"Day 8b: {test_b}")
+    print(f"Day 8a test: {test_a}")
+    print(f"Day 8b test: {test_b}")
 
-    print(f"Day 8a: {puzzle_a}")
-    print(f"Day 8b: {puzzle_b}")
+    print(f"Day 8a solution: {solution_a}")
+    print(f"Day 8b solution: {solution_b}")
 
     assert test_a == 26
     assert test_b == 61229
 
-    assert puzzle_a == 274
-    assert puzzle_b == 1012089
+    assert solution_a == 274
+    assert solution_b == 1012089
