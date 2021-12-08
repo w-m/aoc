@@ -5,90 +5,66 @@ import pandas as pd
 from tqdm import trange
 
 
-def read_file(file):
-    with open(file, "r") as f:
-        lines = f.readlines()
+def day8b(row):
 
-    patterns = []
-    outputs = []
+    pattern, outputs = row[:10], row[11:]
 
-    for line in lines:
-        p, o = line.strip().split(" | ")
-        patterns.append([set(sp) for sp in p.split(" ")])
-        outputs.append(["".join(set(op)) for op in o.split(" ")])
+    # {pattern_length: [pattern, ...]}
+    # e.g. {2: [{e, b}], 5: [{e, c, f, d, g}, {e, c, f, b, d}, {c, f, b, d, a}], ...}
+    by_len = pattern.groupby(pattern.apply(len)).apply(list).to_dict()
 
-    return patterns, outputs
+    # {digit: pattern}
+    digits = {
+        # unique len digits
+        1: by_len[2][0],
+        4: by_len[4][0],
+        7: by_len[3][0],
+        8: by_len[7][0],
+    }
 
+    for len_5_pattern in by_len[5]:
+        # 3: len(5) and has both signals from digit 1
+        if digits[1].issubset(len_5_pattern):
+            digits[3] = len_5_pattern
+        # 5: len(5) and has both signals from (digit 4 - digit 1)
+        elif (digits[4] - digits[1]).issubset(len_5_pattern):
+            digits[5] = len_5_pattern
+        # 2: remaining len(5) pattern
+        else:
+            digits[2] = len_5_pattern
 
-def day8b(pattern, output):
+    for patterns_len_6 in by_len[6]:
+        # 9: len(6) and has signals from (5 + 1)
+        if (digits[5] | digits[1]).issubset(patterns_len_6):
+            digits[9] = patterns_len_6
+        # 6: len(6) and has signals frmo (8 - 1) + 5
+        elif ((digits[8] - digits[1]) | digits[5]).issubset(patterns_len_6):
+            digits[6] = patterns_len_6
+        # 0: remaining len(6) pattern
+        else:
+            digits[0] = patterns_len_6
 
-    db = np.array([list(val) for val in digits.values()]).astype(bool)
-    pattern_lens = np.array([len(p) for p in pattern])
-
-    dp = {}
-
-    # 1: len(2)
-    dp[1] = pattern[np.argmax(pattern_lens == 2)]
-    # 4: len(4)
-    dp[4] = pattern[np.argmax(pattern_lens == 4)]
-    # 7: len(3)
-    dp[7] = pattern[np.argmax(pattern_lens == 3)]
-    # 8: len(7)
-    dp[8] = pattern[np.argmax(pattern_lens == 7)]
-
-    ps = pd.Series(pattern)
-    ps5 = ps[ps.str.len() == 5]
-
-    # len 5: 235
-    # len 6: 069
-
-    # 3: len(5) & has both signals from digit 1
-    ps5_3 = ps5.apply(lambda x: dp[1].issubset(x))
-    dp[3] = ps5[ps5_3].iloc[0]
-    # 5: len(5) & has both signals from digit 4 - digit 1
-    ps5_5 = ps5.apply(lambda x: (dp[4] - dp[1]).issubset(x))
-    dp[5] = ps5[ps5_5].iloc[0]
-    # 2: other len(5)
-    dp[2] = ps5[~(ps5_3 + ps5_5)].iloc[0]
-
-    ps6 = ps[ps.str.len() == 6]
-
-    # 9: len(6) & 5 & 1
-    ps6_9 = ps6.apply(lambda x: (dp[5] | dp[1]).issubset(x))
-    dp[9] = ps6[ps6_9].iloc[0]
-
-    # 6: len(6) & 8 - 1 + 5
-    ps6_6 = ps6.apply(lambda x: ((dp[8] - dp[1]) | dp[5]).issubset(x))
-    dp[6] = ps6[ps6_6].iloc[0]
-
-    dp[0] = ps6[~(ps6_9 | ps6_6)].iloc[0]
-
-    dpdf = pd.DataFrame((dp.keys(), dp.values())).T
-
-    digits = []
-    for o in output:
-        dpdf[1].apply(lambda x: x is set(o))
-        digits.append(dpdf[dpdf[1].apply(lambda x: x == set(o))][0].iloc[0])
-
-    seq = int("".join([str(d) for d in digits]))
-    return seq
+    # {pattern: digit}
+    lookup = {pattern: digit for digit, pattern in digits.items()}
+    output_digits = "".join([str(lookup[o]) for o in outputs])
+    return int(output_digits)
 
 
 @print_durations
 def day8(file):
 
-    patterns, outputs = read_file(file)
-    sum_1478 = 0
-    for o in outputs:
-        sum_1478 += sum([1 for s in o if len(s) in [2, 3, 4, 7]])
+    # 10 patterns | 4 outputs
+    df = pd.read_csv(file, sep=" ", header=None).applymap(frozenset)
 
-    yield sum_1478
+    outputs = df.iloc[:, 11:]
+    output_lens = outputs.applymap(len).melt().value.value_counts()
 
-    sum_b = 0
-    for pattern, output in zip(patterns, outputs):
-        sum_b += day8b(pattern, output)
+    # digits 1, 4, 7, and 8 each use a unique number of segments
+    # num segments: 2, 3, 4, 7
+    # in the output values, how many times do digits 1, 4, 7, or 8 appear?
+    yield output_lens[[2, 3, 4, 7]].sum()
 
-    yield sum_b
+    yield df.apply(day8b, axis=1).sum()
 
 
 if __name__ == "__main__":
