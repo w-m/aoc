@@ -3,7 +3,6 @@ import pandas as pd
 
 
 def day8b(row):
-
     pattern, outputs = row[:10], row[11:]
 
     # {pattern_length: [pattern, ...]}
@@ -41,7 +40,6 @@ def day8b(row):
         else:
             digits[0] = len_6_pattern
 
-    # {pattern: digit}
     lookup = {pattern: digit for digit, pattern in digits.items()}
     output_digits = "".join([str(lookup[o]) for o in outputs])
     return int(output_digits)
@@ -56,9 +54,8 @@ def day8(file):
     outputs = df.iloc[:, 11:]
     output_lens = outputs.applymap(len).melt().value.value_counts()
 
-    # digits 1, 4, 7, and 8 each use a unique number of segments
-    # num segments: 2, 3, 4, 7
-    # in the output values, how many times do digits 1, 4, 7, or 8 appear?
+    # digits 1, 4, 7, and 8 each use a unique number of segments (2, 3, 4 and 7 segments)
+    # how many times do digits 1, 4, 7, or 8 appear in the output?
     yield output_lens[[2, 3, 4, 7]].sum()
 
     yield df.apply(day8b, axis=1).sum()
