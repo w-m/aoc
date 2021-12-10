@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 
-def check_syntax(line):
+def corrupted_line_score(line):
 
     stack = []
 
@@ -23,6 +23,7 @@ def check_syntax(line):
             if char == ">" and match != "<":
                 return 25137
 
+    # line not corrupted
     return 0
 
 
@@ -30,7 +31,8 @@ def complete_line(lines):
 
     for line in lines:
 
-        if check_syntax(line) > 0:
+        # discard the corrupted lines
+        if corrupted_line_score(line) > 0:
             continue
 
         stack = []
@@ -47,18 +49,17 @@ def complete_line(lines):
 
         while len(stack):
 
-            char = stack.pop()
-
             total_score *= 5
 
-            if char == "(":
-                total_score += 1
-            elif char == "[":
-                total_score += 2
-            elif char == "{":
-                total_score += 3
-            elif char == "<":
-                total_score += 4
+            match stack.pop():
+                case "(":
+                    total_score += 1
+                case "[":
+                    total_score += 2
+                case "{":
+                    total_score += 3
+                case "<":
+                    total_score += 4
 
         yield total_score
 
@@ -69,7 +70,7 @@ def day10(file):
     with open(file, "r") as f:
         lines = f.readlines()
 
-    yield sum(check_syntax(line) for line in lines)
+    yield sum(corrupted_line_score(line) for line in lines)
 
     line_scores = sorted(complete_line(lines))
     yield line_scores[len(line_scores) // 2]
