@@ -75,7 +75,7 @@ if __name__ == "__main__":
     print(f"Day 9b solution: {solution_b}")
 
     assert test_a == 15
-    assert test_b == 61229
+    assert test_b == 1134
 
     assert solution_a == 452
-    assert solution_b == 1012089
+    assert solution_b == 1263735
