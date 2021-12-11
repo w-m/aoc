@@ -18,8 +18,7 @@ def step(octos):
     any_has_flashed = True
 
     has_flashed_this_step = np.zeros_like(octos, dtype=bool)
-
-    kernel = np.ones((3, 3), np.uint8)
+    energy_kernel = np.ones((3, 3), np.uint8)
 
     # first, the energy level of each octopus increases by 1
     octos += 1
@@ -31,16 +30,16 @@ def step(octos):
 
         # an octopus can only flash at most once per step
         flashing &= ~has_flashed_this_step
-
         any_has_flashed = flashing.any()
 
         # this increases the energy level of all adjacent octopuses by 1
         # including octopuses that are diagonally adjacent
 
+        # wm: that's wrong - an octopuses energy can increase by more than 1
+        #     per loop, if it has more than 1 neighbor flashing
         # energy_increase = cv2.dilate(flashing.astype(np.uint8), kernel)
 
-        energy_increase = cv2.filter2D(src=flashing.astype(np.uint8), ddepth=-1, kernel=kernel, borderType=cv2.BORDER_ISOLATED)
-
+        energy_increase = cv2.filter2D(src=flashing.astype(np.uint8), ddepth=-1, kernel=energy_kernel, borderType=cv2.BORDER_ISOLATED)
         octos += energy_increase
 
         # if this causes an octopus to have an energy level greater than 9, it also flashes
@@ -52,9 +51,7 @@ def step(octos):
     # as it used all of its energy to flash
     octos[has_flashed_this_step] = 0
 
-    step_flashes = has_flashed_this_step.sum()
-
-    return step_flashes
+    return has_flashed_this_step.sum()
 
 
 @print_durations
@@ -64,15 +61,18 @@ def day11(file):
 
     total_flashes = 0
 
-    for i in range(100):
-        total_flashes += step(octos)
-
-    yield total_flashes
-
     octos = read_file(file)
     for i in itertools.count(start=1):
         num_flashes = step(octos)
+        total_flashes += num_flashes
+
+        # puzzle a
+        if i == 100:
+            yield total_flashes
+
+        # puzzle b
         if num_flashes == np.prod(octos.shape):
+            assert i > 100
             yield i
             break
 
@@ -87,8 +87,8 @@ if __name__ == "__main__":
     print(f"Day 11a solution: {solution_a}")
     print(f"Day 11b solution: {solution_b}")
 
-    assert test_a == 26397
-    # assert test_b == 288957
+    assert test_a == 1656
+    assert test_b == 195
 
-    assert solution_a == 388713
-    # assert solution_b == 3539961434
+    assert solution_a == 1585
+    assert solution_b == 382
