@@ -1,6 +1,6 @@
 from funcy import print_durations
-import networkx as nx
 from dataclasses import dataclass
+from collections import defaultdict
 
 
 @dataclass
@@ -20,15 +20,11 @@ def read_graph(file):
     with open(file, "r") as f:
         edges = [line.strip().split("-") for line in f.readlines()]
 
-    nodes = {node for ab in edges for node in ab}
+    G = defaultdict(set)
 
-    G = nx.Graph()
-    for node in nodes:
-        # not used currently
-        size = "big" if node.isupper() else "small"
-        G.add_node(node, size=size)
-
-    G.add_edges_from(edges)
+    for a, b in edges:
+        G[a].add(b)
+        G[b].add(a)
 
     return G
 
@@ -39,7 +35,7 @@ def valid_edge_visit_small_twice(b, cur_path):
 
 def find_path(graph, cur_path, paths, edge_validator=None):
 
-    for a, b in graph.edges(cur_path.path[-1:]):
+    for b in graph[cur_path.path[-1]]:
 
         # once you leave the start cave, you may not return to it
         if b == "start":
