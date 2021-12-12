@@ -21,7 +21,24 @@ def read_graph(file):
     return G
 
 
-def valid_edge(b, cur_path):
+def valid_edge_visit_small_once(b, cur_path):
+
+    # big caves can be visited any number of times
+    if b.isupper():
+        return True
+
+    # once you leave the start cave, you may not return to it
+    if b == "start":
+        return False
+
+    # not visited yet
+    if b not in cur_path:
+        return True
+
+    return False
+
+
+def valid_edge_visit_small_twice(b, cur_path):
 
     # big caves can be visited any number of times
     if b.isupper():
@@ -40,29 +57,10 @@ def valid_edge(b, cur_path):
     if len(lower_counter) == sum(lower_counter.values()):
         return True
 
-    # node_series = pd.Series(cur_path)
-    # lower_vc = node_series[node_series.str.islower()].value_counts()
-
-    # if (lower_vc > 1).any():
-    #     return False
-
     return False
 
 
-def find_path_visit_small_once(graph, cur_path, paths):
-
-    for a, b in graph.edges(cur_path[-1:]):
-
-        if b == "end":
-            paths.append([*cur_path, b])
-            continue
-
-        if b.isupper() or b not in cur_path:
-            new_path = [*cur_path, b]
-            find_path_visit_small_once(graph, new_path, paths)
-
-
-def find_path_visit_small_twice(graph, cur_path, paths):
+def find_path(graph, cur_path, paths, valid_edge):
 
     for a, b in graph.edges(cur_path[-1:]):
 
@@ -73,55 +71,36 @@ def find_path_visit_small_twice(graph, cur_path, paths):
 
         if valid_edge(b, cur_path):
             new_path = [*cur_path, b]
-            find_path_visit_small_twice(graph, new_path, paths)
+            find_path(graph, new_path, paths, valid_edge)
 
 
 @print_durations
-def day12_a(file):
-
+def day12(file):
     graph = read_graph(file)
+    small_once_paths = []
+    find_path(graph, ["start"], small_once_paths, valid_edge_visit_small_once)
+    yield len(small_once_paths)
 
-    paths = []
-    find_path_visit_small_once(graph, ["start"], paths)
+    small_twice_paths = []
+    find_path(graph, ["start"], small_twice_paths, valid_edge_visit_small_twice)
+    yield len(small_twice_paths)
 
-    return len(paths)
 
+def run_expect(file, result_a, result_b):
 
-@print_durations
-def day12_b(file):
+    a, b = day12(file)
 
-    graph = read_graph(file)
+    print(f"Day 12a {file}: {a}")
+    assert a == result_a
 
-    paths = []
-    find_path_visit_small_twice(graph, ["start"], paths)
-
-    return len(paths)
+    if result_b:
+        print(f"Day 12b {file}: {b}")
+        assert b == result_b
 
 
 if __name__ == "__main__":
-    test_aa, test_ab, test_ac = day12_a("test_input_a.txt"), day12_a("test_input_b.txt"), day12_a("test_input_c.txt")
-    test_ba, test_bb, test_bc = day12_b("test_input_a.txt"), day12_b("test_input_b.txt"), day12_b("test_input_c.txt")
-    solution_a = day12_a("input.txt")
-    solution_b = day12_b("input.txt")
 
-    print(f"Day 11a test a: {test_aa}")
-    print(f"Day 11a test b: {test_ab}")
-    print(f"Day 11a test c: {test_ac}")
-
-    print(f"Day 11b test a: {test_ba}")
-    print(f"Day 11b test b: {test_bb}")
-    print(f"Day 11b test c: {test_bc}")
-
-    print(f"Day 11a solution: {solution_a}")
-    print(f"Day 11b solution: {solution_b}")
-
-    assert test_aa == 10
-    assert test_ab == 19
-    assert test_ac == 226
-
-    assert test_ba == 36
-    assert test_bb == 103
-    assert test_bc == 3509
-
-    assert solution_a == 3421
-    assert solution_b == 84870
+    run_expect("test_input_a.txt", 10, 36)
+    run_expect("test_input_b.txt", 19, 103)
+    run_expect("test_input_c.txt", 226, 3509)
+    run_expect("input.txt", 3421, 84870)
