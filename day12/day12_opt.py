@@ -1,7 +1,6 @@
 from funcy import print_durations
 from collections import defaultdict
 
-# TODO remove edge to "start"
 # TODO duplicate lower case nodes
 
 
@@ -28,9 +27,13 @@ def read_graph(file):
 
     G = defaultdict(set)
 
-    for a, b in edges:
-        G[nodes[a]].add(nodes[b])
-        G[nodes[b]].add(nodes[a])
+    for source, target in edges:
+        G[nodes[source]].add(nodes[target])
+
+        # can travel both directions generally
+        # but don't go back to start, or return from end
+        if source != "start" and target != "end":
+            G[nodes[target]].add(nodes[source])
 
     return G, nodes, lower_node_ids
 
