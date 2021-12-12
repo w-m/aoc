@@ -1,15 +1,19 @@
 from funcy import print_durations
 from collections import defaultdict
 
+# TODO remove edge to "start"
+# TODO duplicate lower case nodes
+
 
 def read_graph(file):
 
     with open(file, "r") as f:
         edges = [line.strip().split("-") for line in f.readlines()]
 
-    # {'start': 1, 'A': 2, 'b': 3, 'c': 4, 'd': 5, 'end': 6}
+    # {'start': 1, 'A': 2, 'b': 4, 'c': 8, 'd': 16, 'end': 32}
     nodes = {}
 
+    # {1, 4, 8, 16, 32}
     lower_node_ids = set()
 
     node_id = 1
@@ -20,7 +24,7 @@ def read_graph(file):
                 nodes[node] = node_id
                 if node.islower():
                     lower_node_ids.add(node_id)
-                node_id += 1
+                node_id <<= 1
 
     G = defaultdict(set)
 
@@ -31,25 +35,28 @@ def read_graph(file):
     return G, nodes, lower_node_ids
 
 
-def count_paths(graph, node, visited, start_id, end_id, lower_node_ids, allow_second_visit=False, visited_any_lower_twice=False):
+def count_paths(graph, node, visited, end_id, allow_single_visit, allow_second_visit=0, visited_any_twice=False):
 
     num_paths = 0
 
     for target in graph[node]:
-
-        # once you leave the start cave, you may not return to it
-        if target == start_id:
-            continue
 
         # once you reach the end cave, the path must end immediately
         if target == end_id:
             num_paths += 1
             continue
 
-        # big caves can be visited any number of times
-        if target not in lower_node_ids or target not in visited or allow_second_visit and not visited_any_lower_twice:
-            visited_twice = visited_any_lower_twice or (target in lower_node_ids and target in visited)
-            num_paths += count_paths(graph, target, visited | {node}, start_id, end_id, lower_node_ids, allow_second_visit, visited_twice)
+        if target & visited:
+
+            if target & allow_single_visit:
+                continue
+
+            if visited_any_twice and target & allow_second_visit:
+                continue
+
+        num_paths += count_paths(
+            graph, target, visited | target, end_id, allow_single_visit, allow_second_visit, visited_any_twice | (target & visited) & allow_second_visit
+        )
 
     return num_paths
 
@@ -59,8 +66,24 @@ def day12(file):
 
     start_node_id = node_lookup["start"]
 
-    yield count_paths(graph, start_node_id, {start_node_id}, start_node_id, node_lookup["end"], lower_node_ids)
-    yield count_paths(graph, start_node_id, {start_node_id}, start_node_id, node_lookup["end"], lower_node_ids, allow_second_visit=True)
+    allow_single_visit = 0
+    for node_name, node_id in node_lookup.items():
+        if node_name.islower():
+            allow_single_visit |= node_id
+
+    yield count_paths(graph, start_node_id, start_node_id, node_lookup["end"], allow_single_visit=allow_single_visit)
+
+    allow_single_visit = node_lookup["start"] | node_lookup["end"]
+
+    allow_second_visit = 0
+    for node_name, node_id in node_lookup.items():
+        if node_name == "start":
+            continue
+        if node_name == "end":
+            continue
+        if node_name.islower():
+            allow_second_visit |= node_id
+    yield count_paths(graph, start_node_id, start_node_id, node_lookup["end"], allow_single_visit=allow_single_visit, allow_second_visit=allow_second_visit)
 
 
 @print_durations
