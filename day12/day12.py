@@ -21,37 +21,7 @@ def read_graph(file):
     return G
 
 
-def valid_edge_visit_small_once(b, cur_path):
-
-    # big caves can be visited any number of times
-    if b.isupper():
-        return True
-
-    # once you leave the start cave, you may not return to it
-    if b == "start":
-        return False
-
-    # not visited yet
-    if b not in cur_path:
-        return True
-
-    return False
-
-
 def valid_edge_visit_small_twice(b, cur_path):
-
-    # big caves can be visited any number of times
-    if b.isupper():
-        return True
-
-    # once you leave the start cave, you may not return to it
-    if b == "start":
-        return False
-
-    # not visited yet
-    if b not in cur_path:
-        return True
-
     lower_counter = Counter(node for node in cur_path if node.islower())
 
     if len(lower_counter) == sum(lower_counter.values()):
@@ -60,25 +30,29 @@ def valid_edge_visit_small_twice(b, cur_path):
     return False
 
 
-def find_path(graph, cur_path, paths, valid_edge):
+def find_path(graph, cur_path, paths, edge_validator=None):
 
     for a, b in graph.edges(cur_path[-1:]):
+
+        # once you leave the start cave, you may not return to it
+        if b == "start":
+            continue
 
         # once you reach the end cave, the path must end immediately
         if b == "end":
             paths.append([*cur_path, b])
             continue
 
-        if valid_edge(b, cur_path):
+        # big caves can be visited any number of times
+        if b.isupper() or b not in cur_path or edge_validator and edge_validator(b, cur_path):
             new_path = [*cur_path, b]
-            find_path(graph, new_path, paths, valid_edge)
+            find_path(graph, new_path, paths, edge_validator)
 
 
-@print_durations
 def day12(file):
     graph = read_graph(file)
     small_once_paths = []
-    find_path(graph, ["start"], small_once_paths, valid_edge_visit_small_once)
+    find_path(graph, ["start"], small_once_paths)
     yield len(small_once_paths)
 
     small_twice_paths = []
@@ -86,6 +60,7 @@ def day12(file):
     yield len(small_twice_paths)
 
 
+@print_durations
 def run_expect(file, result_a, result_b):
 
     a, b = day12(file)
