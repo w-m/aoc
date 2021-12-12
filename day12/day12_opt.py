@@ -1,16 +1,5 @@
 from funcy import print_durations
-from dataclasses import dataclass
 from collections import defaultdict
-
-
-@dataclass
-class Path:
-    visited: {str}
-    visited_any_lower_twice: bool = False
-
-    def add_node(self, node: str):
-        visited_twice = self.visited_any_lower_twice or (node.islower() and node in self.visited)
-        return Path(visited={*self.visited, node}, visited_any_lower_twice=visited_twice)
 
 
 def read_graph(file):
@@ -27,7 +16,7 @@ def read_graph(file):
     return G
 
 
-def count_paths(graph, node, cur_path, allow_second_visit=False):
+def count_paths(graph, node, visited, allow_second_visit=False, visited_any_lower_twice=False):
 
     num_paths = 0
 
@@ -43,9 +32,9 @@ def count_paths(graph, node, cur_path, allow_second_visit=False):
             continue
 
         # big caves can be visited any number of times
-        if target.isupper() or target not in cur_path.visited or allow_second_visit and not cur_path.visited_any_lower_twice:
-            new_path = cur_path.add_node(target)
-            num_paths += count_paths(graph, target, new_path, allow_second_visit)
+        if target.isupper() or target not in visited or allow_second_visit and not visited_any_lower_twice:
+            visited_twice = visited_any_lower_twice or (target.islower() and target in visited)
+            num_paths += count_paths(graph, target, visited | {node}, allow_second_visit, visited_twice)
 
     return num_paths
 
@@ -53,9 +42,8 @@ def count_paths(graph, node, cur_path, allow_second_visit=False):
 def day12(file):
     graph = read_graph(file)
 
-    yield count_paths(graph, "start", Path(visited={"start"}))
-
-    yield count_paths(graph, "start", Path(visited={"start"}), allow_second_visit=True)
+    yield count_paths(graph, "start", {"start"})
+    yield count_paths(graph, "start", {"start"}, allow_second_visit=True)
 
 
 @print_durations
