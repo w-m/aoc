@@ -27,11 +27,7 @@ def read_graph(file):
     return G
 
 
-def valid_edge_visit_small_twice(b, cur_path):
-    return not cur_path.visited_any_lower_twice
-
-
-def count_paths(graph, node, cur_path, edge_validator=None):
+def count_paths(graph, node, cur_path, allow_second_visit=False):
 
     num_paths = 0
 
@@ -47,9 +43,9 @@ def count_paths(graph, node, cur_path, edge_validator=None):
             continue
 
         # big caves can be visited any number of times
-        if target.isupper() or target not in cur_path.visited or edge_validator and edge_validator(target, cur_path):
+        if target.isupper() or target not in cur_path.visited or allow_second_visit and not cur_path.visited_any_lower_twice:
             new_path = cur_path.add_node(target)
-            num_paths += count_paths(graph, target, new_path, edge_validator)
+            num_paths += count_paths(graph, target, new_path, allow_second_visit)
 
     return num_paths
 
@@ -59,7 +55,7 @@ def day12(file):
 
     yield count_paths(graph, "start", Path(visited={"start"}))
 
-    yield count_paths(graph, "start", Path(visited={"start"}), valid_edge_visit_small_twice)
+    yield count_paths(graph, "start", Path(visited={"start"}), allow_second_visit=True)
 
 
 @print_durations
