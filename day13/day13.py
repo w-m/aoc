@@ -14,7 +14,8 @@ def read_paper(file):
             if not len(line):
                 continue
             if line.startswith("fold along"):
-                folds.append(line.split()[-1].split("="))
+                axis, num = line.split()[-1].split("=")
+                folds.append((axis, int(num)))
             else:
                 dots.append(line.split(","))
 
@@ -25,11 +26,9 @@ def read_paper(file):
 def day13(file):
     dots, folds = read_paper(file)
 
-    # paper = np.zeros((dots[:, 1].max() + 1, dots[:, 0].max() + 1), dtype=int)
     max_fold_x = 0
     max_fold_y = 0
     for axis, line in folds:
-        line = int(line)
         if axis == "x":
             max_fold_x = max(max_fold_x, line)
         if axis == "y":
@@ -39,8 +38,6 @@ def day13(file):
     paper[dots[:, 1], dots[:, 0]] = 1
 
     for fold_id, (axis, line) in enumerate(folds):
-
-        line = int(line)
 
         if axis == "x":
             paper = paper[:, :line] + paper[:, -1:line:-1]
