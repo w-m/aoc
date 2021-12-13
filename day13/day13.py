@@ -8,9 +8,7 @@ def read_paper(file):
     folds = []
 
     with open(file, "r") as f:
-
         for line in f:
-
             line = line.strip()
 
             if not len(line):
@@ -21,7 +19,6 @@ def read_paper(file):
                 dots.append(line.split(","))
 
     dots = np.array(dots, dtype=int)
-
     return dots, folds
 
 
@@ -31,7 +28,6 @@ def day13(file):
 
     paper = np.zeros((dots[:, 1].max() + 1, dots[:, 0].max() + 1), dtype=int)
     paper[dots[:, 1], dots[:, 0]] = 1
-    np.set_printoptions(linewidth=100000)
 
     for fold_id, (axis, line) in enumerate(folds):
 
@@ -52,10 +48,7 @@ def day13(file):
             yield (paper > 0).sum()
 
     result = paper > 0
-    rstr = np.where(result, "█", " ")
-
-    for y in range(result.shape[0]):
-        print("".join(rstr[y]))
+    print(np.array2string(result, separator="", formatter={"bool": {0: " ", 1: "█"}.get}))
 
     yield result.sum()
 
