@@ -23,10 +23,19 @@ def read_paper(file):
 
 
 def day13(file):
-
     dots, folds = read_paper(file)
 
-    paper = np.zeros((dots[:, 1].max() + 1, dots[:, 0].max() + 1), dtype=int)
+    # paper = np.zeros((dots[:, 1].max() + 1, dots[:, 0].max() + 1), dtype=int)
+    max_fold_x = 0
+    max_fold_y = 0
+    for axis, line in folds:
+        line = int(line)
+        if axis == "x":
+            max_fold_x = max(max_fold_x, line)
+        if axis == "y":
+            max_fold_y = max(max_fold_y, line)
+
+    paper = np.zeros((max_fold_y * 2 + 1, max_fold_x * 2 + 1), dtype=int)
     paper[dots[:, 1], dots[:, 0]] = 1
 
     for fold_id, (axis, line) in enumerate(folds):
@@ -34,15 +43,9 @@ def day13(file):
         line = int(line)
 
         if axis == "x":
-            paper[:, :line] += paper[:, line + 1 :][:, ::-1]
-            paper = paper[:, :line]
+            paper = paper[:, :line] + paper[:, -1:line:-1]
         else:
-            if paper.shape[0] % 2 == 0:
-                paper[1 : line + 1] += paper[line:][::-1]
-                paper = paper[:line]
-            else:
-                paper[:line] += paper[line + 1 :][::-1]
-                paper = paper[:line]
+            paper = paper[:line] + paper[-1:line:-1]
 
         if fold_id == 0:
             yield (paper > 0).sum()
