@@ -25,7 +25,10 @@ def day13(file):
     max_fold_x = max(num for axis, num in folds if axis == "x")
     max_fold_y = max(num for axis, num in folds if axis == "y")
 
+    # make twice as big as the largest fold in each dimension
     paper = np.zeros((max_fold_y * 2 + 1, max_fold_x * 2 + 1), dtype=int)
+
+    # draw dots
     paper[dots[:, 1], dots[:, 0]] = 1
 
     for fold_id, (axis, line) in enumerate(folds):
@@ -38,10 +41,10 @@ def day13(file):
         if fold_id == 0:
             yield (paper > 0).sum()
 
-    result = paper > 0
-    print(np.array2string(result, separator="", formatter={"bool": {0: " ", 1: "█"}.get}))
+    set_dots = paper > 0
+    print(np.array2string(set_dots, separator="", formatter={"bool": {0: " ", 1: "█"}.get}))
 
-    yield result.sum()
+    yield set_dots.sum()
 
 
 @print_durations
