@@ -1,38 +1,29 @@
 from funcy import print_durations
 import numpy as np
+from io import StringIO
 
 
 def read_paper(file):
 
-    dots = []
-    folds = []
-
     with open(file, "r") as f:
-        for line in f:
-            line = line.strip()
+        dotstr, foldstr = f.read().split("\n\n")
 
-            if not len(line):
-                continue
-            if line.startswith("fold along"):
-                axis, num = line.split()[-1].split("=")
-                folds.append((axis, int(num)))
-            else:
-                dots.append(line.split(","))
+    # [('y', 7), ('x', 5)]
+    folds = np.loadtxt(StringIO(foldstr), dtype="str")[:, -1]
+    folds = [(axis, int(num)) for axis, num in np.char.split(folds, "=")]
 
-    dots = np.array(dots, dtype=int)
+    # array([[ 6, 10],
+    #         ...
+    #        [ 9,  0]])
+    dots = np.loadtxt(StringIO(dotstr), dtype=int, delimiter=",")
     return dots, folds
 
 
 def day13(file):
     dots, folds = read_paper(file)
 
-    max_fold_x = 0
-    max_fold_y = 0
-    for axis, line in folds:
-        if axis == "x":
-            max_fold_x = max(max_fold_x, line)
-        if axis == "y":
-            max_fold_y = max(max_fold_y, line)
+    max_fold_x = max(num for axis, num in folds if axis == "x")
+    max_fold_y = max(num for axis, num in folds if axis == "y")
 
     paper = np.zeros((max_fold_y * 2 + 1, max_fold_x * 2 + 1), dtype=int)
     paper[dots[:, 1], dots[:, 0]] = 1
