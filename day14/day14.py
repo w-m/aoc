@@ -16,18 +16,19 @@ def read_polymer(file):
     #  ('C', 'B'): 'H',
     #  ...
     # }
-    rules = {tuple(ab): c for (ab, c) in [line.strip().split(" -> ") for line in rules.splitlines()]}
+    rules = {tuple(ab): c for (ab, c) in (line.strip().split(" -> ") for line in rules.splitlines())}
     return polymer, rules
 
 
 def insert_polymers(polymer, rules):
 
     new_polymer = []
-    for (a, b) in pairwise(polymer):
-        if (a, b) in rules:
-            new_polymer.extend([a, rules[(a, b)]])
+    for pair in pairwise(polymer):
+        first, _ = pair
+        if pair in rules:
+            new_polymer.extend([first, rules[pair]])
         else:
-            new_polymer.append(a)
+            new_polymer.append(first)
 
     # second part of pair is never inserted to not have duplication
     # --> need to append the last element again
@@ -40,13 +41,15 @@ def count_polymer_insertion(paircount, rules):
 
     new_paircount = copy(paircount)
 
-    for (pair_a, pair_b), insert in rules.items():
+    for pair, insert_item in rules.items():
 
-        cur_count = paircount[(pair_a, pair_b)]
-        new_paircount[(pair_a, pair_b)] -= cur_count
+        first, second = pair
+        cur_count = paircount[pair]
 
-        new_paircount[(pair_a, insert)] += paircount[(pair_a, pair_b)]
-        new_paircount[(insert, pair_b)] += paircount[(pair_a, pair_b)]
+        new_paircount[pair] -= cur_count
+
+        new_paircount[(first, insert_item)] += cur_count
+        new_paircount[(insert_item, second)] += cur_count
 
     return new_paircount
 
