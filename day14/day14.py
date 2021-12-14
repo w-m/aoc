@@ -3,17 +3,24 @@ from itertools import pairwise
 from collections import Counter
 from copy import copy
 
+# Puzzle: https://adventofcode.com/2021/day/14
+
 
 def read_polymer(file):
 
     with open(file, "r") as f:
         polymer, rules = f.read().split("\n\n")
 
+    # {('C', 'H'): 'B',
+    #  ('H', 'H'): 'N',
+    #  ('C', 'B'): 'H',
+    #  ...
+    # }
     rules = {tuple(ab): c for (ab, c) in [line.strip().split(" -> ") for line in rules.splitlines()]}
     return polymer, rules
 
 
-def step(polymer, rules):
+def insert_polymers(polymer, rules):
 
     new_polymer = []
     for (a, b) in pairwise(polymer):
@@ -22,12 +29,14 @@ def step(polymer, rules):
         else:
             new_polymer.append(a)
 
+    # second part of pair is never inserted to not have duplication
+    # --> need to append the last element again
     new_polymer.append(polymer[-1])
 
     return new_polymer
 
 
-def step_count(paircount, rules):
+def count_polymer_insertion(paircount, rules):
 
     new_paircount = copy(paircount)
 
@@ -46,24 +55,33 @@ def day14(file):
 
     polymer, rules = read_polymer(file)
 
+    # puzzle part a: we can actually construct the polymer chain
     for i in range(10):
-        polymer = step(polymer, rules)
+        polymer = insert_polymers(polymer, rules)
     most_common = Counter(polymer).most_common()
+
+    # taking the quantity of the most common element and subtracting the quantity of the least common element
     yield most_common[0][1] - most_common[-1][1]
+
+    # puzzle part b: it's getting too long, can only count occurrences
 
     polymer, rules = read_polymer(file)
     paircount = Counter(pairwise(polymer))
 
     for i in range(40):
-        paircount = step_count(paircount, rules)
+        paircount = count_polymer_insertion(paircount, rules)
 
     lettercount = Counter()
+    # count first letter of each pair
     for (a, b), count in paircount.items():
         lettercount[a] += count
 
+    # and again, last element of chain
     lettercount[polymer[-1]] += 1
 
     most_common = lettercount.most_common()
+
+    # taking the quantity of the most common element and subtracting the quantity of the least common element
     yield most_common[0][1] - most_common[-1][1]
 
 
