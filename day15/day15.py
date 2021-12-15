@@ -34,24 +34,36 @@ def supersize_maze(maze):
     return maze5x
 
 
-def risk_shortest_path(maze):
+@print_durations
+def construct_graph(maze):
     graph = nx.grid_2d_graph(*maze.shape).to_directed()
 
     for u, v, data in graph.edges(data=True):
         data["risk"] = maze[v[0], v[1]]
 
+    return graph
+
+
+@print_durations
+def risk_shortest_path(graph, source, target):
+
     # What is the lowest total risk of any path from the top left to the bottom right?
-    path = nx.shortest_path(graph, source=(0, 0), target=(maze.shape[0] - 1, maze.shape[1] - 1), weight="risk")
+    path = nx.shortest_path(graph, source=source, target=target, weight="risk")
     return nx.classes.function.path_weight(graph, path, "risk")
+
+
+def risk_from_maze(maze):
+
+    graph = construct_graph(maze)
+    return risk_shortest_path(graph, source=(0, 0), target=(maze.shape[0] - 1, maze.shape[1] - 1))
 
 
 def day15(file):
 
     maze = read_maze(file)
 
-    yield risk_shortest_path(maze)
-
-    yield risk_shortest_path(supersize_maze(maze))
+    yield risk_from_maze(maze)
+    yield risk_from_maze(supersize_maze(maze))
 
 
 @print_durations
