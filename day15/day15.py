@@ -18,13 +18,17 @@ def read_maze(file):
 
 def supersize_maze(maze):
 
+    # The entire cave is actually five times larger in both dimensions
+    maze5x = np.tile(maze, (5, 5))
+
+    # each time the tile repeats to the right or downward,
+    # all of its risk levels are 1 higher than the tile immediately up or left of it
     offsets = np.mgrid[:5, :5].sum(axis=0)
     offsets = np.repeat(offsets, maze.shape[0], axis=0)
     offsets = np.repeat(offsets, maze.shape[1], axis=1)
-
-    maze5x = np.tile(maze, (5, 5))
     maze5x += offsets
 
+    # risk levels above 9 wrap back around to 1
     maze5x[maze5x > 9] %= 9
 
     return maze5x
@@ -33,10 +37,8 @@ def supersize_maze(maze):
 def risk_shortest_path(maze):
     graph = nx.grid_2d_graph(*maze.shape).to_directed()
 
-    for y in range(maze.shape[0]):
-        for x in range(maze.shape[1]):
-            for edge in graph.in_edges((y, x)):
-                graph.edges[edge]["risk"] = maze[y, x]
+    for u, v, data in graph.edges(data=True):
+        data["risk"] = maze[v[0], v[1]]
 
     # What is the lowest total risk of any path from the top left to the bottom right?
     path = nx.shortest_path(graph, source=(0, 0), target=(maze.shape[0] - 1, maze.shape[1] - 1), weight="risk")
@@ -46,6 +48,7 @@ def risk_shortest_path(maze):
 def day15(file):
 
     maze = read_maze(file)
+
     yield risk_shortest_path(maze)
 
     yield risk_shortest_path(supersize_maze(maze))
