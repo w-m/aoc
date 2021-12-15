@@ -46,10 +46,8 @@ def construct_graph(maze):
 
 @print_durations
 def risk_shortest_path(graph, source, target):
-
     # What is the lowest total risk of any path from the top left to the bottom right?
-    path = nx.shortest_path(graph, source=source, target=target, weight="risk")
-    return nx.classes.function.path_weight(graph, path, "risk")
+    return nx.dijkstra_path_length(graph, source, target, weight="risk")
 
 
 def risk_from_maze(maze):
