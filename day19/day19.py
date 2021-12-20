@@ -5,7 +5,26 @@ from io import StringIO
 from collections import deque
 
 # Puzzle: https://adventofcode.com/2021/day/19
-
+# - an assortment of beacons and scanners float motionless in the water
+# - each scanner is capable of detecting all beacons in a cube centered on the scanner
+# - scanners do not know their own position
+# - scanner regions overlap
+# - at least 12 beacons within each overlap between scanner pair
+# - each scanner could be in any of 24 different orientations:
+#   facing positive or negative x, y, or z, four directions "up" from that facing
+#
+# task: how many beacons are there
+# input: relative 3D positions of beacons detected by each scanner
+#
+# solution:
+# (I) find scanner pairs with overlap
+#  - for all beacons in a scan as reference beacon, hash all beacons in scan
+#  - compare with all other beacons hashes in all other scans
+#  - >= 12 matching hashes? -> overlap, found pair
+# (II) find transforms between scanners
+#  - scanner 0 is reference at (0, 0, 0), direction xyz
+#  - for any matching overlap, take 4 points, compute transform
+# (III) transform all beacons, return take unique number
 
 def read_scans(file):
     scans = []
@@ -18,17 +37,15 @@ def read_scans(file):
 
     return scans
 
-def beacon_hash(xyz_list):
-    # xyz_32 = xyz_list.astype(np.int32)
-    # return (xyz_32[:, 0] * 1000 * 1000 + xyz_32[:, 1] * 1000 + xyz_32[:, 2])
-    return np.abs(xyz_list).sum(axis=1)
+def beacon_hash(beacon_list, reference_beacon):
+    # hash function: manhatten distance to reference beacon
+    return np.abs(beacon_list - reference_beacon).sum(axis=1)
 
 def build_lookup(scan):
     lookup_beacons = []
     lookup_sets = []
     for ref_beacon in scan:
-        scan_ref_beacon = scan - ref_beacon
-        bh = beacon_hash(scan_ref_beacon)
+        bh = beacon_hash(scan, ref_beacon)
         lookup_beacons.append(bh)
         lookup_sets.append(set(bh))
     
@@ -53,25 +70,12 @@ def find_transform(source_transform, source_scan, target_scan, source_lookups, t
     source_matches = np.array(source_matches)    
     target_matches = np.array(target_matches)
 
-    print(source_matches.shape)
-
-    # TODO fix shape of (12, 1, 3) - remove middle dim
-    # source_matches = source_matches[:, 0, :]
-    # target_matches = target_matches[:, 0, :]
-
-    # ones = np.ones((source_matches.shape[0], 1), dtype=int)
-    # source_matches_hom = np.hstack((source_matches, ones))
-    # target_matches_hom = np.hstack((target_matches, ones))
-
     # transform ource matches in reference view (scan #0)
     source_matches_ref = np.dot(source_matches, source_transform)
 
     # find transform target matches to reference view
     transform = np.linalg.solve(target_matches[:4], source_matches_ref[:4])
-    # transform = transform @ source_transform
-
-    # TODO np.int16?
-    transform = np.rint(transform).astype(np.int32)
+    transform = np.rint(transform).astype(np.int16)
 
     return transform
 
@@ -115,13 +119,9 @@ def day19(file):
         if target_id not in known_transforms:
             some_match = scdf[(scdf.query_scan_id == source_id) & (scdf.match_scan_id == target_id)].iloc[0]
             found_transform = find_transform(known_transforms[source_id], scans[source_id], scans[target_id], scan_lookup_beacons[source_id][some_match.qs_lookup_id], scan_lookup_beacons[target_id][some_match.match_lookup_id])
-            print(source_id, target_id)
-            print(found_transform)
             known_transforms[target_id] = found_transform
             for match in connections[target_id]:
                 next_to_match.append((target_id, int(match)))
-
-    print(known_transforms)
 
     all_beacons = []
 
@@ -137,6 +137,8 @@ def day19(file):
     # return len(coordset)
     yield unique_rows.shape[0]
 
+    # day19 b: what is the largest Manhattan distance between any two scanners?
+
     max_dist = 0
 
     for a in known_transforms.values():
@@ -145,11 +147,6 @@ def day19(file):
             max_dist = max(max_dist, manhatten_dist)
 
     yield max_dist
-
-
-
-
-            
 
 @print_durations
 def run_expect(file, result_a, result_b):
@@ -167,6 +164,6 @@ def run_expect(file, result_a, result_b):
 if __name__ == "__main__":
 
     run_expect("test_input.txt", 79, 3621)
-    run_expect("input.txt", 306, -1)
+    run_expect("input.txt", 306, 9764)
 
 
