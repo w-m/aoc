@@ -7,21 +7,32 @@ import cv2
 
 # Puzzle: https://adventofcode.com/2021/day/20
 
+# input lut: image enhancement string (512 bits)
+# input img: boolean image
+# 
+# task:
+# perform a loop of (puzzle a: 2), (puzzle b: 50) iterations of
+# - look at given bool img with a 3x3 filter
+# - reshape 3x3 into 9, interpret as integer value, lookup in lut
+# - assume image is infinite
+#
+# solution:
+# - 3x3 sliding window with numpy
+# - initialize border around current image with value from lut
+
 def read_img(file):
     with open(file, "r") as f:
         lookup, img = f.read().split("\n\n")
-
     lookup = np.array(list(lookup.replace(".", "0").replace("#", "1").replace("\n", "")), dtype=np.uint8)
     img = np.array([list(line) for line in img.replace(".", "0").replace("#", "1").splitlines()], dtype=np.uint8)
-
     return lookup, img
 
 def filter_img(lookup, img, kernel, i):
-    if i % 2 ==  0 or not lookup[0]:
-        grown_img = np.zeros((img.shape[0] + 6, img.shape[1] + 6), dtype=np.uint8)
+    if i % 2 == 0 or not lookup[0]:
+        grown_img = np.zeros((img.shape[0] + 4, img.shape[1] + 4), dtype=np.uint8)
     else:
-        grown_img = np.ones((img.shape[0] + 6, img.shape[1] + 6), dtype=np.uint8)
-    grown_img[3:-3, 3:-3] = img
+        grown_img = np.ones((img.shape[0] + 4, img.shape[1] + 4), dtype=np.uint8)
+    grown_img[2:-2, 2:-2] = img
     sliding = np.lib.stride_tricks.sliding_window_view(grown_img, (3, 3))
     sliding = sliding.reshape((sliding.shape[0], sliding.shape[1], -1))
     indices = np.dot(sliding, kernel)
@@ -29,18 +40,14 @@ def filter_img(lookup, img, kernel, i):
     return img
 
 def day20(file):
-
     lookup, img = read_img(file)
-
     kernel = 2 ** np.arange(8, -1, -1)
 
     for i in range(2):
         img = filter_img(lookup, img, kernel, i)
 
-    np.set_printoptions(threshold=np.inf)
-    np.set_printoptions(linewidth=100000)
-
-    print(np.array2string(img.astype(bool), separator="", formatter={"bool": {0: " ", 1: "█"}.get}))
+    with np.printoptions(threshold=np.inf, linewidth=100000):
+        print(np.array2string(img.astype(bool), separator="", formatter={"bool": {0: " ", 1: "█"}.get}))
 
     yield img.sum()
 
