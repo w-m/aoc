@@ -1,9 +1,5 @@
 from funcy import print_durations
 import numpy as np
-import pandas as pd
-from io import StringIO
-from collections import deque
-import cv2
 
 # Puzzle: https://adventofcode.com/2021/day/20
 
@@ -28,21 +24,38 @@ def read_img(file):
     return lookup, img
 
 def filter_img(lookup, img, kernel, i):
-    if i % 2 == 0 or not lookup[0]:
-        grown_img = np.zeros((img.shape[0] + 4, img.shape[1] + 4), dtype=np.uint8)
-    else:
-        grown_img = np.ones((img.shape[0] + 4, img.shape[1] + 4), dtype=np.uint8)
+    
+    # grow image around border before filtering
+    init_array_fn = np.zeros
+
+    if lookup[0]:
+        # infinite pixels are switching on and off
+        # if they aren't turned off, there's an infinite number of 1-pixels
+        assert not lookup[-1]
+
+        # every even step has turned on all the infinite pixels
+        # -> growing border has turned-on pixels
+        if i % 2 == 1:    
+            init_array_fn = np.ones
+
+    grown_img = init_array_fn((img.shape[0] + 4, img.shape[1] + 4), dtype=np.uint8)
     grown_img[2:-2, 2:-2] = img
+    
+    # 3x3 filter
     sliding = np.lib.stride_tricks.sliding_window_view(grown_img, (3, 3))
+    
+    # reshape 3x3 into 9 bits
     sliding = sliding.reshape((sliding.shape[0], sliding.shape[1], -1))
     indices = np.dot(sliding, kernel)
-    img = lookup[indices]
-    return img
+
+    return lookup[indices]
+
 
 def day20(file):
     lookup, img = read_img(file)
     kernel = 2 ** np.arange(8, -1, -1)
 
+    # a: 2 iterations
     for i in range(2):
         img = filter_img(lookup, img, kernel, i)
 
@@ -51,6 +64,7 @@ def day20(file):
 
     yield img.sum()
 
+    # b: 50 iterations
     for i in range(48):
         img = filter_img(lookup, img, kernel, i)
 
