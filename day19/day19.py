@@ -25,6 +25,18 @@ from collections import deque
 #  - scanner 0 is reference at (0, 0, 0), direction xyz
 #  - for any matching overlap, take 4 points, compute transform
 # (III) transform all beacons, return take unique number
+#
+# possible performance improvement:
+# - match only from latest scanner or queue onto all unknown candidates
+#   instead of matching all scans with all others
+# - remove pandas
+#
+# alternative solution (not implemented):
+# as we are constrained to a grid, a much simpler solution could be:
+# for all pairs of scans (26 * 25)
+#  for all possible directions (24)
+#   - take the difference between the beacon points
+#   - at least twelve share the same offset? -> found direction and translation
 
 def read_scans(file):
     scans = []
@@ -59,26 +71,21 @@ def find_transform(source_transform, source_scan, target_scan, source_lookups, t
     matching_beacon_hashes = list(set(source_lookups) & set(target_lookups))
     source_matches = []
     target_matches = []
-    for match_id, match in enumerate(matching_beacon_hashes):
+    for match in matching_beacon_hashes:
         source_match_id = np.nonzero(source_lookups==match)[0]
         target_match_id = np.nonzero(target_lookups==match)[0]
 
-        # drop multiple matches
+        # drop matches with non-unique hashes, they can't be properly matched
         if len(source_match_id) == 1 and len(target_match_id) == 1:
             source_matches.append(source_scan[source_match_id[0]])
             target_matches.append(target_scan[target_match_id[0]])
 
-    source_matches = np.array(source_matches)    
-    target_matches = np.array(target_matches)
-
     # transform ource matches in reference view (scan #0)
-    source_matches_ref = np.dot(source_matches, source_transform)
+    source_matches_ref = np.dot(np.array(source_matches), source_transform)
 
     # find transform target matches to reference view
-    transform = np.linalg.solve(target_matches[:4], source_matches_ref[:4])
-    transform = np.rint(transform).astype(np.int16)
-
-    return transform
+    transform = np.linalg.solve(np.array(target_matches)[:4], source_matches_ref[:4])
+    return np.rint(transform).astype(np.int16)
 
 def find_scan_transforms(scans, scan_lookup_beacons, scdf, connections):
     known_transforms = {0: np.eye(4, dtype=np.int16)}
