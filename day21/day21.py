@@ -1,26 +1,21 @@
 from funcy import print_durations
 import itertools
-import numpy as np
-from collections import defaultdict, Counter
 import functools
+from collections import Counter
 
 
 # Puzzle: https://adventofcode.com/2021/day/21
 
-# game board with spaces 1 to 10, two players
-# after 10, wraps around to 1
-# 100-sided die, rolls 1,2,3,...100,1,2,3...
-# each player's turn, the player rolls the die three times
-# and adds up the results. Then, the player moves their pawn that many times forward
-# score: add current field
-# 1000 points wins
-
 
 def create_die(maxnum):
+    # 100-sided die, rolls 1,2,3,...100,1,2,3...
     yield from enumerate(itertools.cycle(range(1, maxnum + 1)), 1)
 
 
 def wrap_around(field):
+    # game board with spaces 1 to 10, two players
+    # after 10, wraps around to 1
+
     if field > 10:
         field %= 10
     if field == 0:
@@ -43,24 +38,19 @@ def player(startfield, die):
         yield diecount, score
 
 
-def step_count_dict():
-    x = []
-    for i in range(1, 4):
-        for j in range(1, 4):
-            for k in range(1, 4):
-                x.append((i, j, k))
-
-    step_counts = np.unique(np.array(x).sum(axis=1), return_counts=True)
-
-    # {3: 1, 4: 3, 5: 6, 6: 7, 7: 6, 8: 3, 9: 1}
-    return {step: count for step, count in zip(step_counts[0], step_counts[1])}
-
-
-scd = step_count_dict()
-
-
 @print_durations
 def day21a(p1_start, p2_start):
+
+    # game board with spaces 1 to 10, two players
+    # after 10, wraps around to 1
+    # 100-sided die, rolls 1,2,3,...100,1,2,3...
+    # each player's turn, the player rolls the die three times
+    # and adds up the results. Then, the player moves their pawn that many times forward
+    # score: add current field
+    # score >= 1000: player wins immediately
+
+    # what do you get if you multiply the score of the losing player
+    # by the number of times the die was rolled during the game
 
     die = create_die(100)
 
@@ -78,8 +68,19 @@ def day21a(p1_start, p2_start):
         if s2 >= 1000:
             return s1 * diecount
 
-    # what do you get if you multiply the score of the losing player
-    # by the number of times the die was rolled during the game
+
+def step_count_dict():
+    x = []
+    for i in range(1, 4):
+        for j in range(1, 4):
+            for k in range(1, 4):
+                x.append(i + j + k)
+
+    # {3: 1, 4: 3, 5: 6, 6: 7, 7: 6, 8: 3, 9: 1}
+    return Counter(x)
+
+
+scd = step_count_dict()
 
 
 @functools.cache
@@ -112,6 +113,14 @@ def count_num_wins(p1_field, p1_score, p2_field, p2_score):
 
 @print_durations
 def day21b(p1_start, p2_start):
+
+    # same board, but three-sided die
+    # die not deterministic anymore
+    # die throw = new universe created
+    # count the number of wins for each possible die-throw
+    # winning score reduced to 21
+    # find the player that wins in more universes; in how many universes does that player win?
+
     return max(count_num_wins(p1_start, 0, p2_start, 0))
 
 
