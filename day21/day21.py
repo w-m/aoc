@@ -20,6 +20,14 @@ def create_die(maxnum):
     yield from enumerate(itertools.cycle(range(1, maxnum + 1)), 1)
 
 
+def wrap_around(field):
+    if field > 10:
+        field %= 10
+    if field == 0:
+        field = 10
+    return field
+
+
 def player(startfield, die):
     score = 0
     field = startfield
@@ -30,12 +38,7 @@ def player(startfield, die):
             walk += dieval
 
         field += walk
-
-        if field > 10:
-            field = field % 10
-            if field == 0:
-                field = 10
-
+        field = wrap_around(field)
         score += field
         yield diecount, score
 
@@ -77,14 +80,6 @@ def day21a(p1_start, p2_start):
 
     # what do you get if you multiply the score of the losing player
     # by the number of times the die was rolled during the game
-
-
-def wrap_around(field):
-    if field > 10:
-        field %= 10
-    if field == 0:
-        field = 1
-    return field
 
 
 @functools.cache
