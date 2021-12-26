@@ -46,9 +46,14 @@ def read_reboot_steps(file):
 
 def count_active_cubes(commands, coords_list):
 
-    xs = coords_list[:, 0, :]
-    ys = coords_list[:, 1, :]
-    zs = coords_list[:, 2, :]
+    # coords_list (num_commands, xyz=3, lower/uper=2)
+
+    # (num_commands, lower/uper=2, xyz=3)
+    coords_arr = np.swapaxes(coords_list, 1, 2)
+
+    xs = coords_arr[..., 0]
+    ys = coords_arr[..., 1]
+    zs = coords_arr[..., 2]
 
     xuq, xinv = np.unique(xs, return_inverse=True)
     yuq, yinv = np.unique(ys, return_inverse=True)
@@ -58,15 +63,15 @@ def count_active_cubes(commands, coords_list):
     ysize = np.diff(yuq)
     zsize = np.diff(zuq)
 
-    coords_mapped = np.zeros_like(coords_list)
-    coords_mapped[:, 0, :] = xinv.reshape(xs.shape)
-    coords_mapped[:, 1, :] = yinv.reshape(ys.shape)
-    coords_mapped[:, 2, :] = zinv.reshape(zs.shape)
+    coords_mapped = np.zeros_like(coords_arr)
+    coords_mapped[..., 0] = xinv.reshape(xs.shape)
+    coords_mapped[..., 1] = yinv.reshape(ys.shape)
+    coords_mapped[..., 2] = zinv.reshape(zs.shape)
 
     reactor = np.zeros((len(xuq), len(yuq), len(zuq)), dtype=bool)
 
     for command, coords in zip(commands, coords_mapped):
-        reactor[coords[0, 0] : coords[0, 1], coords[1, 0] : coords[1, 1], coords[2, 0] : coords[2, 1]] = command
+        reactor[coords[0, 0] : coords[1, 0], coords[0, 1] : coords[1, 1], coords[0, 2] : coords[1, 2]] = command
 
     sum = 0
 
