@@ -1,9 +1,5 @@
 from funcy import print_durations
 import numpy as np
-from itertools import pairwise
-import itertools
-from dataclasses import dataclass
-from tqdm.contrib import tzip
 
 # Puzzle: https://adventofcode.com/2021/day/22
 
@@ -46,39 +42,47 @@ def read_reboot_steps(file):
 
 def count_active_cubes(commands, coords_list):
 
-    # coords_list (num_commands, xyz=3, lower/uper=2)
-
-    # (num_commands, lower/uper=2, xyz=3)
+    # coords_list shape: (num_commands, xyz=3, lower/uper=2)
+    # new shape: (num_commands, lower/uper=2, xyz=3)
     coords_arr = np.swapaxes(coords_list, 1, 2)
 
+    # all xs, ys and zs
     xs = coords_arr[..., 0]
     ys = coords_arr[..., 1]
     zs = coords_arr[..., 2]
 
+    # idea: map unique coordinates to smalles possible values, e.g.
+    # x = [11, 9, 13, 11] -> [1, 0, 2, 1]
+
+    # unique xs and the mapping from original xs to new xs
     xuq, xinv = np.unique(xs, return_inverse=True)
     yuq, yinv = np.unique(ys, return_inverse=True)
     zuq, zinv = np.unique(zs, return_inverse=True)
 
-    xsize = np.diff(xuq)
-    ysize = np.diff(yuq)
-    zsize = np.diff(zuq)
-
+    # perform mapping from original coords to compressed coord system
     coords_mapped = np.zeros_like(coords_arr)
     coords_mapped[..., 0] = xinv.reshape(xs.shape)
     coords_mapped[..., 1] = yinv.reshape(ys.shape)
     coords_mapped[..., 2] = zinv.reshape(zs.shape)
 
-    reactor = np.zeros((len(xuq), len(yuq), len(zuq)), dtype=bool)
+    # how big are the original grid cells?
+    xsizes = np.diff(xuq)
+    ysizes = np.diff(yuq)
+    zsizes = np.diff(zuq)
 
+    # expand by multiplying into whole (x, y, z) grid
+    grid_cell_sizes = np.einsum("i,j,k->ijk", xsizes, ysizes, zsizes)
+
+    # apply commands to compressed coordinates
+    reactor = np.zeros((len(xuq), len(yuq), len(zuq)), dtype=bool)
     for command, coords in zip(commands, coords_mapped):
         reactor[coords[0, 0] : coords[1, 0], coords[0, 1] : coords[1, 1], coords[0, 2] : coords[1, 2]] = command
 
-    sum = 0
+    # multiply compressed grid with original grid cell size
+    reactor64 = reactor[:-1, :-1, :-1].astype(np.int64) * grid_cell_sizes
 
-    for x, y, z in tzip(*np.nonzero(reactor)):
-        sum += xsize[x] * ysize[y] * zsize[z]
-
-    return sum
+    # return total
+    return reactor64.sum()
 
 
 def day22(file):
@@ -115,8 +119,7 @@ def run_expect(file, result_a, result_b):
 
 
 if __name__ == "__main__":
-
     run_expect("tiny_input.txt", 39, 39)
     run_expect("test_input.txt", 590784, None)
     run_expect("test_input_b.txt", 474140, 2758514936282235)
-    run_expect("input.txt", 658691, -1)
+    run_expect("input.txt", 658691, 1228699515783640)
