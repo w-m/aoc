@@ -7,36 +7,19 @@ from collections import deque, Counter, defaultdict
 
 def compute(file):
     with open(file, "r") as f:
-        lines = f.readlines()
+        split_elves = f.read().split("\n\n")
+        elf_calories = [elf.split("\n") for elf in split_elves]
 
-    lines = [line.strip() for line in lines]
+    caloric_sums = []
+    for elf in elf_calories:
+        caloric_sum = 0
+        for calories in elf:
+            caloric_sum += int(calories)
+        caloric_sums.append(caloric_sum)
 
-    cur_elf = 0
-    max_cal = 0
-    for line in lines:
-        if len(line):
-            cur_elf += int(line)
-        else:
-            max_cal = max(max_cal, cur_elf)
-            cur_elf = 0
+    yield max(caloric_sums)
 
-    yield max_cal
-
-    elves = []
-    cur_elf = 0
-    for line in lines:
-        if len(line):
-            cur_elf += int(line)
-        else:
-            elves.append(cur_elf)
-            cur_elf = 0
-
-    if cur_elf > 0:
-        elves.append(cur_elf)
-
-    elves = sorted(elves)
-
-    yield sum(elves[-3:])
+    yield sum(sorted(caloric_sums, reverse=True)[:3])
 
 
 @print_durations
