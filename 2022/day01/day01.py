@@ -1,21 +1,21 @@
 from funcy import print_durations
-import numpy as np
-import pandas as pd
 import os.path
-from collections import deque, Counter, defaultdict
+from typing import List, Iterator
+
+# https://adventofcode.com/2022/day/1
+
+# The Elves take turns writing down the number of Calories contained by the various meals,
+# snacks, rations, etc. that they've brought with them, one item per line. Each Elf separates
+# their own inventory from the previous Elf's inventory (if any) by a blank line.
 
 
-def compute(file):
+@print_durations
+def compute(file) -> Iterator[int]:
     with open(file, "r") as f:
         split_elves = f.read().split("\n\n")
-        elf_calories = [elf.split("\n") for elf in split_elves]
 
-    caloric_sums = []
-    for elf in elf_calories:
-        caloric_sum = 0
-        for calories in elf:
-            caloric_sum += int(calories)
-        caloric_sums.append(caloric_sum)
+    elf_calories: List[List[str]] = [elf.split("\n") for elf in split_elves]
+    caloric_sums: List[int] = [sum(int(cal) for cal in elf) for elf in elf_calories]
 
     yield max(caloric_sums)
 
