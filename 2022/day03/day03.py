@@ -6,63 +6,48 @@ import pandas as pd
 # https://adventofcode.com/2022/day/3
 
 
-def priority(common_set):
-    assert len(common_set) == 1
-    # get only item from set
-    item = common_set.pop()
+def priority(common_chars: set) -> int:
+    assert len(common_chars) == 1
+    item = common_chars.pop()
+
     # Lowercase item types a through z have priorities 1 through 26
-    # if item is lowercase:
     if item.islower():
         prior = ord(item) - ord("a") + 1
+    # Uppercase item types A through Z have priorities 27 through 52
     else:
-        # Uppercase item types A through Z have priorities 27 through 52
         prior = ord(item) - ord("A") + 27
 
     return prior
 
 
-def compute_a(file):
-    psum = 0
-    # read strings per line from file in for loop
+def common_compartment_priority(line: str) -> int:
+    # The list of items for each rucksack is given as characters all on a single line.
+    # A given rucksack always has the same number of items in each of its two compartments,
+    # so the first half of the characters represent items in the first compartment,
+    # while the second half of the characters represent items in the second compartment.
+    a, b = line[: len(line) // 2], line[len(line) // 2 :]
+    assert len(a) == len(b)
+    return priority(set(a) & set(b))
+
+
+def compute_a(file: str) -> int:
     with open(file) as f:
-        for line in f:
-            line = line.strip()
-            # split line in first and second half
-            a, b = line[: len(line) // 2], line[len(line) // 2 :]
-            assert len(a) == len(b)
-            sa = set(a)
-            sb = set(b)
-            # count common characters
-            common = sa & sb
-
-            psum += priority(common)
-
-    return psum
+        return sum(common_compartment_priority(line.strip()) for line in f)
 
 
 def compute_b(file):
-
     with open(file) as f:
-        lines = f.readlines()
-
-    psum = 0
-    # iterate over all lines, three at a time
-    for a, b, c in zip(lines[::3], lines[1::3], lines[2::3]):
-        # remove trailing newline
-        a, b, c = a.strip(), b.strip(), c.strip()
-
-        sa, sb, sc = set(a), set(b), set(c)
-        common = sa & sb & sc
-        psum += priority(common)
-
-    return psum
+        lines = f.read().splitlines()
+    # Every set of three lines in your list corresponds to a single group,
+    # but each group can have a different badge item type.
+    # the badge is the only item type carried by all three Elves
+    iter_3_at_a_time = zip(*[iter(lines)] * 3)
+    return sum(priority(set(a) & set(b) & set(c)) for a, b, c in iter_3_at_a_time)
 
 
 @print_durations
 def compute(file) -> Iterator[Optional[int]]:
-
     yield compute_a(file)
-
     yield compute_b(file)
 
 
