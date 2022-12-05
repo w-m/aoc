@@ -1,7 +1,6 @@
 from funcy import print_durations
 import os.path
 from typing import List, Iterator, Optional
-import pandas as pd
 
 # https://adventofcode.com/2022/day/4
 
@@ -24,16 +23,20 @@ def str_to_range(range_str: str):
 
 def compute_query(file: str, query) -> int:
     with open(file) as f:
+        # lines like "1-3,2-4" -> (range(1, 4), range(2, 5))
         ranges = (map(str_to_range, line.strip().split(",")) for line in f)
+        # apply query to each pair of ranges
         return sum(query(range_a, range_b) for range_a, range_b in ranges)
 
 
 def compute_a(file: str) -> int:
+    # In how many assignment pairs does one range fully contain the other?
     is_either_subset = lambda ar, br: range_subset(ar, br) or range_subset(br, ar)
     return compute_query(file, is_either_subset)
 
 
 def compute_b(file):
+    # In how many assignment pairs do the ranges overlap?
     return compute_query(file, range_overlapping)
 
 
