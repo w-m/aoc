@@ -6,15 +6,22 @@ from copy import copy
 
 # https://adventofcode.com/2022/day/5
 
+# They do, however, have a drawing of the starting stacks of crates
+# and the rearrangement procedure (your puzzle input)
+
 
 def compute_a(stacks, movelines) -> str:
 
     for moveline in movelines:
         # parse numbers from strings like "move 1 from 2 to 1"
         _, how_many, _, source, _, target = moveline.split()
+
+        # In each step of the procedure, a quantity of crates is moved from one stack
+        # to a different stack.
         for i in range(int(how_many)):
             stacks[int(target) - 1].append(stacks[int(source) - 1].pop())
 
+    # The Elves just need to know which crate will end up on top of each stack
     return "".join(stack[-1] for stack in stacks)
 
 
@@ -24,6 +31,7 @@ def compute_b(stacks, movelines):
         # parse numbers from strings like "move 1 from 2 to 1"
         _, how_many, _, source, _, target = moveline.split()
 
+        # moving several crates at once retains their order
         elems_to_move = []
         for i in range(int(how_many)):
             elems_to_move.append(stacks[int(source) - 1].pop())
@@ -38,7 +46,10 @@ def read_file(file):
         stacklines, movelines = f.read().split("\n\n")
 
     stacklines = stacklines.splitlines()[::-1]
+
+    # e.g. " 1   2   3 "
     num_stacks = len(stacklines[0][1::4])
+
     stacks = [[] for _ in range(num_stacks)]
     for line in stacklines[1:]:
         stack_content = line[1::4]
