@@ -1,46 +1,40 @@
 from funcy import print_durations
 import os.path
 from typing import List, Iterator, Optional
-import pandas as pd
-from copy import copy
 from collections import deque
 
 # https://adventofcode.com/2022/day/6
 
 
-@print_durations
-def compute(file) -> Iterator[Optional[int]]:
+def find_start_marker(line: str, unique_consecutive_chars: int) -> int:
 
     # The device will send your subroutine a datastream buffer (your puzzle input)
 
     # In the protocol being used by the Elves, the start of a packet is indicated
     # by a sequence of four characters that are all different.
 
-    # Specifically, it needs to report the number of characters from the beginning
+    # report the number of characters from the beginning
     # of the buffer to the end of the first such four-character marker.
 
-    # For example, suppose you receive the following datastream buffer:
-    # mjqjpqmgbljsphdztnvjfqwrcgsmlb
-    # The first time a marker appears is after the seventh character arrives.
+    deq = deque([], maxlen=unique_consecutive_chars)
+    for i, char in enumerate(line):
+        deq.append(char)
+        if len(set(deq)) == unique_consecutive_chars:
+            return i + 1
+    assert False
+
+
+@print_durations
+def compute(file) -> Iterator[Optional[int]]:
 
     with open(file) as f:
         line = f.read().strip()
 
-    deq = deque([], maxlen=4)
-    for i, char in enumerate(line):
-        deq.append(char)
-        if len(set(deq)) == 4:
-            # yield i - 3
-            yield i + 1
-            break
+    # start of packet marker
+    yield find_start_marker(line, 4)
 
-    deq = deque([], maxlen=14)
-    for i, char in enumerate(line):
-        deq.append(char)
-        if len(set(deq)) == 14:
-            # yield i - 3
-            yield i + 1
-            break
+    # start of message marker
+    yield find_start_marker(line, 14)
 
 
 @print_durations
