@@ -3,18 +3,15 @@ import os.path
 from typing import List, Iterator, Optional
 import pandas as pd
 from copy import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # https://adventofcode.com/2022/day/7
 
 
+@dataclass
 class Dir(object):
-    def __init__(self, name: str, children=None):
-        self.name = name
-        self.children = []
-        if children is not None:
-            for child in children:
-                self.add_child(child)
+    name: str
+    children: List = field(default_factory=lambda: [])
 
     def __repr__(self):
         return self.tostr()
@@ -73,45 +70,45 @@ class File(object):
 def compute(file) -> Iterator[Optional[int]]:
 
     with open(file) as f:
-        commands = [cmd.splitlines() for cmd in f.read().split("$ ")]
+        execs = [cmd.splitlines() for cmd in f.read().split("$ ")]
 
-    cwd_stack = []
+    cwd_stack: List[Dir] = []
 
     root = Dir("/")
 
-    for command in commands:
-        if not len(command):
+    for exec in execs:
+        if not len(exec):
             continue
 
+        call, *output = exec
+
         # Within the terminal output, lines that begin with $ are commands you executed
-        cmd = command[0].split()
-        if cmd[0] == "cd":
+        cmd, *params = call.split()
+        if cmd == "cd":
             # cd .. moves out one level
-            if cmd[1] == "..":
+            if params[0] == "..":
                 cwd_stack.pop()
             # cd / switches the current directory to the outermost directory, /
-            elif cmd[1] == "/":
+            elif params[0] == "/":
                 cwd_stack = [root]
             else:
-                dir_name = cmd[1]
+                dir_name = params[0]
                 dir = cwd_stack[-1].get_child_dir(dir_name)
                 cwd_stack.append(dir)
         # ls means list
-        elif cmd[0] == "ls":
-            for ls_result in command[1:]:
-                lsr = ls_result.split()
+        elif cmd == "ls":
+            for ls_line in output:
+                ls_line = ls_line.split()
                 # dir xyz means that the current directory contains a directory named xyz
-                if lsr[0] == "dir":
-                    dir_name = lsr[1]
+                if ls_line[0] == "dir":
+                    dir_name = ls_line[1]
                     # creates if it doesn't exist
                     cwd_stack[-1].get_child_dir(dir_name)
                 else:
                     # 123 abc means that the current directory contains a file named abc with size 123
-                    size = int(lsr[0])
-                    name = lsr[1]
+                    size = int(ls_line[0])
+                    name = ls_line[1]
                     cwd_stack[-1].add_child(File(name, size))
-
-    print(root)
 
     yield root.compute_a()
 
