@@ -21,25 +21,24 @@ class Dir(object):
         self.children.append(node)
 
     def get_child_dir(self, dir_name):
-        for child in self.children:
-            if isinstance(child, Dir) and child.name == dir_name:
+        for child in self.child_dirs():
+            if child.name == dir_name:
                 return child
         dir = Dir(dir_name)
         self.add_child(dir)
         return dir
 
-    def sum_directories_100k(self):
-        # To begin, find all of the directories with a total size of at most 100000,
-        # then calculate the sum of their total sizes.
-        # In the example above, these directories are a and e;
-        # the sum of their total sizes is 95437 (94853 + 584).
-        # (As in this example, this process can count files more than once!)
-        total_sum = 0
-        if self.size <= 100000:
-            total_sum += self.size
+    def child_dirs(self):
         for child in self.children:
             if isinstance(child, Dir):
-                total_sum += child.sum_directories_100k()
+                yield child
+
+    def sum_directories_100k(self):
+        # Find all of the directories with a total size of at most 100000,
+        # then calculate the sum of their total sizes.
+        total_sum = sum(child.sum_directories_100k() for child in self.child_dirs())
+        if self.size <= 100000:
+            total_sum += self.size
         return total_sum
 
     def smallest_dir_with_min_size(self, size):
@@ -47,12 +46,11 @@ class Dir(object):
             return None
 
         smallest = self
-        for child in self.children:
-            if isinstance(child, Dir):
-                child_smallest = child.smallest_dir_with_min_size(size)
-                if child_smallest is not None:
-                    if smallest is None or child_smallest.size < smallest.size:
-                        smallest = child_smallest
+        for child in self.child_dirs():
+            child_smallest = child.smallest_dir_with_min_size(size)
+            if child_smallest is not None:
+                if child_smallest.size < smallest.size:
+                    smallest = child_smallest
         return smallest
 
     @property
