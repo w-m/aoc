@@ -20,7 +20,7 @@ class Dir(object):
     def add_child(self, node):
         self.children.append(node)
 
-    def get_child_dir(self, dir_name):
+    def get_create_child_dir(self, dir_name):
         for child in self.child_dirs():
             if child.name == dir_name:
                 return child
@@ -71,10 +71,10 @@ class File(object):
 def compute(file) -> Iterator[Optional[int]]:
 
     with open(file) as f:
+        # Within the terminal output, lines that begin with $ are commands you executed
         execs = [cmd.splitlines() for cmd in f.read().split("$ ")]
 
     cwd_stack: List[Dir] = []
-
     root = Dir("/")
 
     for exec in execs:
@@ -83,32 +83,20 @@ def compute(file) -> Iterator[Optional[int]]:
 
         call, *output = exec
 
-        # Within the terminal output, lines that begin with $ are commands you executed
-        cmd, *params = call.split()
-        if cmd == "cd":
-            # cd .. moves out one level
-            if params[0] == "..":
-                cwd_stack.pop()
-            # cd / switches the current directory to the outermost directory, /
-            elif params[0] == "/":
+        match call.split():
+            case ["cd", "/"]:
                 cwd_stack = [root]
-            else:
-                dir_name = params[0]
-                dir = cwd_stack[-1].get_child_dir(dir_name)
-                cwd_stack.append(dir)
-        elif cmd == "ls":
-            for ls_line in output:
-                ls_split = ls_line.split()
-                # dir xyz means that the current directory contains a directory named xyz
-                if ls_split[0] == "dir":
-                    dir_name = ls_split[1]
-                    # creates if it doesn't exist
-                    cwd_stack[-1].get_child_dir(dir_name)
-                else:
-                    # 123 abc means that the current directory contains a file named abc with size 123
-                    size = int(ls_split[0])
-                    name = ls_split[1]
-                    cwd_stack[-1].add_child(File(name, size))
+            case ["cd", ".."]:
+                cwd_stack.pop()
+            case ["cd", dir_name]:
+                cwd_stack.append(cwd_stack[-1].get_create_child_dir(dir_name))
+            case ["ls"]:
+                for ls_line in output:
+                    match ls_line.split():
+                        case ["dir", dir_name]:
+                            cwd_stack[-1].get_create_child_dir(dir_name)
+                        case [file_size, file_name]:
+                            cwd_stack[-1].add_child(File(file_name, int(file_size)))
 
     yield root.sum_directories_100k()
 
