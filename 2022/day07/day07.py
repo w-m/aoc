@@ -30,7 +30,7 @@ class Dir(object):
         self.add_child(dir)
         return dir
 
-    def compute_a(self):
+    def sum_directories_100k(self):
         # To begin, find all of the directories with a total size of at most 100000,
         # then calculate the sum of their total sizes.
         # In the example above, these directories are a and e;
@@ -41,16 +41,21 @@ class Dir(object):
             total_sum += self.size
         for child in self.children:
             if isinstance(child, Dir):
-                total_sum += child.compute_a()
+                total_sum += child.sum_directories_100k()
         return total_sum
 
-    def all_dirs(self):
-        dirs = []
+    def smallest_dir_with_min_size(self, size):
+        if self.size < size:
+            return None
+
+        smallest = self
         for child in self.children:
             if isinstance(child, Dir):
-                dirs.append(child)
-                dirs.extend(child.all_dirs())
-        return dirs
+                child_smallest = child.smallest_dir_with_min_size(size)
+                if child_smallest is not None:
+                    if smallest is None or child_smallest.size < smallest.size:
+                        smallest = child_smallest
+        return smallest
 
     @property
     def size(self):
@@ -110,7 +115,7 @@ def compute(file) -> Iterator[Optional[int]]:
                     name = ls_line[1]
                     cwd_stack[-1].add_child(File(name, size))
 
-    yield root.compute_a()
+    yield root.sum_directories_100k()
 
     # The total disk space available to the filesystem is 70000000
     space_available = 70000000
@@ -124,12 +129,7 @@ def compute(file) -> Iterator[Optional[int]]:
     # Find the smallest directory that, if deleted, would free up enough space on the filesystem
     # to run the update. What is the total size of that directory?
 
-    smallest_size = space_available
-    for dir in root.all_dirs():
-        if dir.size < smallest_size and dir.size >= need_to_free_up:
-            smallest_size = dir.size
-
-    yield smallest_size
+    yield root.smallest_dir_with_min_size(need_to_free_up).size
 
 
 @print_durations
