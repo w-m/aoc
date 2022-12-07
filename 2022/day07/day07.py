@@ -84,18 +84,18 @@ def compute(file) -> Iterator[Optional[int]]:
         call, *output = exec
 
         match call.split():
-            case ["cd", "/"]:
+            case "cd", "/":
                 cwd_stack = [root]
-            case ["cd", ".."]:
+            case "cd", "..":
                 cwd_stack.pop()
-            case ["cd", dir_name]:
+            case "cd", dir_name:
                 cwd_stack.append(cwd_stack[-1].get_create_child_dir(dir_name))
             case ["ls"]:
                 for ls_line in output:
                     match ls_line.split():
-                        case ["dir", dir_name]:
+                        case "dir", dir_name:
                             cwd_stack[-1].get_create_child_dir(dir_name)
-                        case [file_size, file_name]:
+                        case file_size, file_name:
                             cwd_stack[-1].add_child(File(file_name, int(file_size)))
 
     yield root.sum_directories_100k()
