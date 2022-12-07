@@ -1,8 +1,6 @@
 from funcy import print_durations
 import os.path
 from typing import List, Iterator, Optional
-import pandas as pd
-from copy import copy
 from dataclasses import dataclass, field
 
 # https://adventofcode.com/2022/day/7
@@ -100,19 +98,18 @@ def compute(file) -> Iterator[Optional[int]]:
                 dir_name = params[0]
                 dir = cwd_stack[-1].get_child_dir(dir_name)
                 cwd_stack.append(dir)
-        # ls means list
         elif cmd == "ls":
             for ls_line in output:
-                ls_line = ls_line.split()
+                ls_split = ls_line.split()
                 # dir xyz means that the current directory contains a directory named xyz
-                if ls_line[0] == "dir":
-                    dir_name = ls_line[1]
+                if ls_split[0] == "dir":
+                    dir_name = ls_split[1]
                     # creates if it doesn't exist
                     cwd_stack[-1].get_child_dir(dir_name)
                 else:
                     # 123 abc means that the current directory contains a file named abc with size 123
-                    size = int(ls_line[0])
-                    name = ls_line[1]
+                    size = int(ls_split[0])
+                    name = ls_split[1]
                     cwd_stack[-1].add_child(File(name, size))
 
     yield root.sum_directories_100k()
@@ -121,14 +118,10 @@ def compute(file) -> Iterator[Optional[int]]:
     space_available = 70000000
     # To run the update, you need unused space of at least 30000000
     required_space = 30000000
-
-    cur_size = root.size
-    need_to_free_up = cur_size - space_available + required_space
-    # free up enough space
+    need_to_free_up = root.size - space_available + required_space
 
     # Find the smallest directory that, if deleted, would free up enough space on the filesystem
     # to run the update. What is the total size of that directory?
-
     yield root.smallest_dir_with_min_size(need_to_free_up).size
 
 
