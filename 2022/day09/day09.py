@@ -52,62 +52,44 @@ def vis_visited(visited):
     
     print(vis[::-1])
 
+def simulate_rope(head_moves, rope_len):
+    Txs = [0] * rope_len
+    Tys = [0] * rope_len
+
+    visited = {(Txs[-1], Tys[-1])}
+
+    for head_move in head_moves:
+        movement, steps = head_move.split()
+        for i in range(int(steps)):
+        
+            match movement:
+                case "R":
+                    Txs[0] += 1
+                case "L":
+                    Txs[0] -= 1
+                case "U":
+                    Tys[0] += 1
+                case "D":
+                    Tys[0] -= 1
+                
+            for j in range(1, rope_len):
+                Txs[j], Tys[j] = update_tails(Txs[j], Tys[j], Txs[j-1], Tys[j-1])
+            visited.add((Txs[-1], Tys[-1]))
+            
+    return visited
+
 @print_durations
 def compute(file) -> Iterator[Optional[int]]:
 
     with open(file) as f:
         lines = f.read().splitlines()
 
-    Hx, Hy = 0, 0
-    Tx, Ty = 0, 0
-
-    visited = {(Tx, Ty)}
-
-    for line in lines:
-        movement, steps = line.split()
-        for i in range(int(steps)):
-            match movement:
-                case "R":
-                    Hx += 1
-                case "L":
-                    Hx -= 1
-                case "U":
-                    Hy += 1
-                case "D":
-                    Hy -= 1
-
-            Tx, Ty = update_tails(Tx, Ty, Hx, Hy)
-            visited.add((Tx, Ty))
-
-    vis_visited(visited)
+    visited = simulate_rope(lines, 2)
+    # vis_visited(visited)
     yield len(visited)
 
-    Hx, Hy = 0, 0
-    Txs = [0] * 9
-    Tys = [0] * 9
-
-    visited = {(Txs[-1], Tys[-1])}
-
-    for line in lines:
-        movement, steps = line.split()
-        for i in range(int(steps)):
-        
-            match movement:
-                case "R":
-                    Hx += 1
-                case "L":
-                    Hx -= 1
-                case "U":
-                    Hy += 1
-                case "D":
-                    Hy -= 1
-                
-            Txs[0], Tys[0] = update_tails(Txs[0], Tys[0], Hx, Hy)
-            for j in range(1, 9):
-                Txs[j], Tys[j] = update_tails(Txs[j], Tys[j], Txs[j-1], Tys[j-1])
-            visited.add((Txs[-1], Tys[-1]))
-
-    vis_visited(visited)
+    visited = simulate_rope(lines, 10)
+    # vis_visited(visited)
     yield len(visited)
 
 
