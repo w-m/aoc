@@ -1,10 +1,8 @@
-from funcy import print_durations
 import os.path
-from typing import List, Iterator, Optional
-import pandas as pd
-from copy import copy
+from typing import Iterator, List, Optional
+
 import numpy as np
-from collections import *
+from funcy import print_durations
 
 # https://adventofcode.com/2022/day/09
 
