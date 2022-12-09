@@ -15,28 +15,20 @@ def update_tails(Tx, Ty, Hx, Hy):
    
     if xdiff <= 1 and ydiff <= 1:
         return Tx, Ty
-    
-    if xdiff > 0 and ydiff == 0:
-        if Tx < Hx:
-            Tx += 1
-        else:
-            Tx -= 1
-    elif ydiff > 0 and xdiff == 0:
-        if Ty < Hy:
-            Ty += 1
-        else:
-            Ty -= 1
-    else:
-        if Tx < Hx:
-            Tx += 1
-        else:
-            Tx -= 1
-        if Ty < Hy:
-            Ty += 1
-        else:
-            Ty -= 1
 
-    return Tx, Ty
+    Tx_upd = Tx + 1 if Tx < Hx else Tx - 1
+    Ty_upd = Ty + 1 if Ty < Hy else Ty - 1
+    
+    # horizontal offset
+    if xdiff > 0 and ydiff == 0:
+        return Tx_upd, Ty
+    
+    # vertical offset
+    if ydiff > 0 and xdiff == 0:
+        return Tx, Ty_upd
+    
+    # diagonal offset
+    return Tx_upd, Ty_upd
 
 def test_tails_upd(Tx, Ty, Hx, Hy, expected_Tx, expected_Ty):
     assert update_tails(Tx, Ty, Hx, Hy) == (expected_Tx, expected_Ty)
@@ -111,6 +103,7 @@ if __name__ == "__main__":
     
     test_tails_upd(0, 0, 1, 1, 0, 0)
     test_tails_upd(0, 0, 1, 2, 1, 1)
+    
     run_expect("test_input.txt", 13, 1)
     run_expect("test_input_2.txt", 88, 36)
     run_expect("input.txt", 5619, 2376)
