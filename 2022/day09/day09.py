@@ -38,11 +38,11 @@ def vis_visited(visited):
     minys = min(y for x, y in visited)
     maxxs = max(x for x, y in visited)
     maxys = max(y for x, y in visited)
-    vis = np.zeros((maxys - minys + 1, maxxs - minxs + 1), dtype=np.int8)
+    vis = np.zeros((maxys - minys + 1, maxxs - minxs + 1), dtype=bool)
     for x, y in visited:
-        vis[y - minys, x - minxs] = 1
+        vis[y - minys, x - minxs] = True
     
-    print(vis[::-1])
+    print(np.array2string(vis[::-1], separator="", formatter={"bool": {0: " ", 1: "█"}.get}))
 
 def simulate_rope(head_moves, rope_len):
     Txs = [0] * rope_len
@@ -77,11 +77,11 @@ def compute(file) -> Iterator[Optional[int]]:
         lines = f.read().splitlines()
 
     visited = simulate_rope(lines, 2)
-    # vis_visited(visited)
+    vis_visited(visited)
     yield len(visited)
 
     visited = simulate_rope(lines, 10)
-    # vis_visited(visited)
+    vis_visited(visited)
     yield len(visited)
 
 
