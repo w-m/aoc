@@ -17,42 +17,37 @@ def compute(file) -> Iterator[Optional[int]]:
         lines = f.read().splitlines()
         
     ops = []
+    noop = lambda x: x
         
     for line in lines:
         match line.split():
             case ["noop"]:
-                # ops.append(lambda x: x)
-                ops.append("noop")
+                ops.append(noop)
             case "addx", val:
-                # ops.append(lambda x: x)
-                ops.append("noop")
-                ival = int(val)
-                ops.append(("addx", ival))
-                # ops.append(lambda x: x + ival)
+                # addx takes two cycles
+                ops.append(noop)
+                ops.append(lambda x, ival=int(val): x + ival)
             case _:
                 assert False
                 
     xval = 1
     signal = 0
     crt = ""
-    # execute ops
     for cycle, op in enumerate(ops, start=1):
+
         if (cycle - 20) % 40 == 0:
             signal += cycle * xval
-            print(f"{cycle} {signal} {xval} {cycle * xval}")
         
         crt_idx = (cycle - 1) % 40
         if xval >= crt_idx - 1 and xval <= crt_idx + 1:
-            crt += "#"
+            crt += "█"
         else:
             crt += " "
         
         if cycle % 40 == 0:
             crt += "\n"
-        
-        match op:
-            case ("addx", val):
-                xval += val
+
+        xval = op(xval)
 
     yield signal
     
