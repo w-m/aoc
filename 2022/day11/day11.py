@@ -4,6 +4,7 @@ from typing import Iterator, List, Optional
 from funcy import print_durations
 from dataclasses import dataclass
 from copy import deepcopy
+from math import lcm
 
 # https://adventofcode.com/2022/day/11
 
@@ -81,11 +82,9 @@ def compute(file) -> Iterator[Optional[int]]:
     # your worry level to be divided by three and rounded down to the nearest integer.
     yield monkeys_round(deepcopy(monkeys), 20, lambda worry_level: worry_level // 3)
 
-    div_by_tot = 1
-    for monkey_id, monkey in monkeys.items():
-        div_by_tot *= monkey.div_by
-        print(f"Monkey {monkey_id} has {monkey.items}")
-
+    # Worry levels are no longer divided by three after each item is inspected;
+    # you'll need to find another way to keep your worry levels manageable
+    div_by_tot = lcm(*(monkey.div_by for monkey in monkeys.values()))
     yield monkeys_round(monkeys, 10000, lambda x: x % div_by_tot)
 
 
