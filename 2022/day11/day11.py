@@ -18,7 +18,6 @@ class Monkey:
     div_by: int
     if_true: int
     if_false: int
-    num_inspected: int = 0
 
     def __hash__(self):
         return self.id + sum(self.items) + hash(self.operation) + self.div_by + self.if_true + self.if_false
@@ -41,15 +40,15 @@ class Monkeys:
 @print_durations
 def monkeys_round(monkeys: Monkeys, num_rounds, worry_reducer) -> int:
 
+    inspected = [0 for _ in monkeys]
+
     for round_id in range(num_rounds):
-        monkeys = monkeys_throw_items(monkeys, worry_reducer)
+        monkeys, newly_inspected = monkeys_throw_items(monkeys, worry_reducer)
+        for monkey_id, num_inspected in enumerate(newly_inspected):
+            inspected[monkey_id] += num_inspected
 
     # you're going to have to focus on the two most active monkeys
     # Count the total number of times each monkey inspects items
-    inspected = []
-    for monkey_id, monkey in enumerate(monkeys):
-        print(f"Monkey {monkey_id} inspected {monkey.num_inspected} items")
-        inspected.append(monkey.num_inspected)
     inspected.sort(reverse=True)
 
     return inspected[0] * inspected[1]
@@ -58,6 +57,9 @@ def monkeys_round(monkeys: Monkeys, num_rounds, worry_reducer) -> int:
 # memoize
 # @lru_cache(maxsize=None)
 def monkeys_throw_items(monkeys, worry_reducer):
+
+    inspected = [0 for _ in monkeys]
+
     for monkey_id, monkey in enumerate(monkeys):
         if not monkey.items:
             continue
@@ -65,7 +67,7 @@ def monkeys_throw_items(monkeys, worry_reducer):
             # On a single monkey's turn, it inspects and throws all of the items it is holding
         while len(monkey.items) > 0:
             item = monkey.items.pop(0)
-            monkey.num_inspected += 1
+            inspected[monkey_id] += 1
             old = item
             new = eval(monkey.operation)
             worry_level = worry_reducer(new)
@@ -74,7 +76,7 @@ def monkeys_throw_items(monkeys, worry_reducer):
             else:
                 monkeys[monkey.if_false].items.append(worry_level)
 
-    return monkeys
+    return monkeys, inspected
 
 
 def compute(file) -> Iterator[Optional[int]]:
