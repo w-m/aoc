@@ -54,6 +54,20 @@ def monkeys_round(monkeys, num_rounds, worry_reducer) -> Iterator[Optional[int]]
 
 def compute(file) -> Iterator[Optional[int]]:
 
+    monkeys: Dict[int, Monkey] = parse_monkey_def(file)
+
+    # After each monkey inspects an item but before it tests your worry level,
+    # your relief that the monkey's inspection didn't damage the item causes
+    # your worry level to be divided by three and rounded down to the nearest integer.
+    yield monkeys_round(deepcopy(monkeys), 20, lambda worry_level: worry_level // 3)
+
+    # Worry levels are no longer divided by three after each item is inspected;
+    # you'll need to find another way to keep your worry levels manageable
+    div_by_tot = lcm(*(monkey.div_by for monkey in monkeys.values()))
+    yield monkeys_round(monkeys, 10000, lambda x: x % div_by_tot)
+
+
+def parse_monkey_def(file) -> Dict[int, Monkey]:
     with open(file) as f:
         monkeys_lines = f.read().split("\n\n")
 
@@ -76,16 +90,7 @@ def compute(file) -> Iterator[Optional[int]]:
         if_true = int(lines[4].split("monkey")[1])
         if_false = int(lines[5].split("monkey")[1])
         monkeys[monkey_id] = Monkey(monkey_id, starting_items, operation, div_by, if_true, if_false)
-
-    # After each monkey inspects an item but before it tests your worry level,
-    # your relief that the monkey's inspection didn't damage the item causes
-    # your worry level to be divided by three and rounded down to the nearest integer.
-    yield monkeys_round(deepcopy(monkeys), 20, lambda worry_level: worry_level // 3)
-
-    # Worry levels are no longer divided by three after each item is inspected;
-    # you'll need to find another way to keep your worry levels manageable
-    div_by_tot = lcm(*(monkey.div_by for monkey in monkeys.values()))
-    yield monkeys_round(monkeys, 10000, lambda x: x % div_by_tot)
+    return monkeys
 
 
 @print_durations
