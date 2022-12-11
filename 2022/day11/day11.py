@@ -1,5 +1,5 @@
 import os.path
-from typing import Iterator, List, Optional
+from typing import Iterator, List, Optional, Dict
 
 from funcy import print_durations
 from dataclasses import dataclass
@@ -67,12 +67,12 @@ def compute(file) -> Iterator[Optional[int]]:
 
     monkeys: Dict[int, Monkey] = {}
 
-    for ml in monkeys_lines:
-        lines = ml.split("\n")
-        monkey_id = int(lines[0].split(" ")[1][:-1])
+    for monkey_id, monkey_lines in enumerate(monkeys_lines):
+        lines = monkey_lines.split("\n")
+        assert lines[0] == f"Monkey {monkey_id}:"
         starting_items = [int(x) for x in lines[1].split(":")[1].split(",")]
-        operation = lines[2].split("=")[1].strip()
-        div_by = int(lines[3].split(" ")[-1])
+        operation = lines[2].split("Operation: new =")[1].strip()
+        div_by = int(lines[3].split("Test: divisible by")[1])
         if_true = int(lines[4].split("monkey")[1])
         if_false = int(lines[5].split("monkey")[1])
         monkeys[monkey_id] = Monkey(monkey_id, starting_items, operation, div_by, if_true, if_false)
