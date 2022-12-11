@@ -24,7 +24,7 @@ class Monkey:
 def monkeys_round(monkeys, num_rounds, worry_reducer) -> Iterator[Optional[int]]:
 
     for round_id in range(num_rounds):
-        for monkey_id, monkey in monkeys.items():
+        for monkey_id, monkey in enumerate(monkeys):
 
             if not monkey.items:
                 continue
@@ -44,7 +44,7 @@ def monkeys_round(monkeys, num_rounds, worry_reducer) -> Iterator[Optional[int]]
     # you're going to have to focus on the two most active monkeys
     # Count the total number of times each monkey inspects items
     inspected = []
-    for monkey_id, monkey in monkeys.items():
+    for monkey_id, monkey in enumerate(monkeys):
         print(f"Monkey {monkey_id} inspected {monkey.num_inspected} items")
         inspected.append(monkey.num_inspected)
     inspected.sort(reverse=True)
@@ -54,7 +54,7 @@ def monkeys_round(monkeys, num_rounds, worry_reducer) -> Iterator[Optional[int]]
 
 def compute(file) -> Iterator[Optional[int]]:
 
-    monkeys: Dict[int, Monkey] = parse_monkey_def(file)
+    monkeys: List[Monkey] = parse_monkey_def(file)
 
     # After each monkey inspects an item but before it tests your worry level,
     # your relief that the monkey's inspection didn't damage the item causes
@@ -63,11 +63,11 @@ def compute(file) -> Iterator[Optional[int]]:
 
     # Worry levels are no longer divided by three after each item is inspected;
     # you'll need to find another way to keep your worry levels manageable
-    div_by_tot = lcm(*(monkey.div_by for monkey in monkeys.values()))
+    div_by_tot = lcm(*(monkey.div_by for monkey in monkeys))
     yield monkeys_round(monkeys, 10000, lambda x: x % div_by_tot)
 
 
-def parse_monkey_def(file) -> Dict[int, Monkey]:
+def parse_monkey_def(file) -> List[Monkey]:
     with open(file) as f:
         monkeys_lines = f.read().split("\n\n")
 
@@ -79,7 +79,7 @@ def parse_monkey_def(file) -> Dict[int, Monkey]:
     #     If true: throw to monkey 2
     #     If false: throw to monkey 3
 
-    monkeys: Dict[int, Monkey] = {}
+    monkeys: List[Monkey] = []
 
     for monkey_id, monkey_lines in enumerate(monkeys_lines):
         lines = monkey_lines.split("\n")
@@ -89,7 +89,7 @@ def parse_monkey_def(file) -> Dict[int, Monkey]:
         div_by = int(lines[3].split("Test: divisible by")[1])
         if_true = int(lines[4].split("monkey")[1])
         if_false = int(lines[5].split("monkey")[1])
-        monkeys[monkey_id] = Monkey(monkey_id, starting_items, operation, div_by, if_true, if_false)
+        monkeys.append(Monkey(monkey_id, starting_items, operation, div_by, if_true, if_false))
     return monkeys
 
 
