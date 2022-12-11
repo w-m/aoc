@@ -5,6 +5,7 @@ from funcy import print_durations
 from dataclasses import dataclass
 from copy import deepcopy
 from math import lcm
+from functools import lru_cache
 
 # https://adventofcode.com/2022/day/11
 
@@ -19,27 +20,29 @@ class Monkey:
     if_false: int
     num_inspected: int = 0
 
+    def __hash__(self):
+        return self.id + sum(self.items) + hash(self.operation) + self.div_by + self.if_true + self.if_false
+
+
+@dataclass
+class Monkeys:
+    monkeys: List[Monkey]
+
+    def __hash__(self):
+        return sum(hash(monkey) for monkey in self.monkeys)
+
+    def __iter__(self):
+        return iter(self.monkeys)
+
+    def __getitem__(self, key):
+        return self.monkeys[key]
+
 
 @print_durations
-def monkeys_round(monkeys, num_rounds, worry_reducer) -> Iterator[Optional[int]]:
+def monkeys_round(monkeys: Monkeys, num_rounds, worry_reducer) -> int:
 
     for round_id in range(num_rounds):
-        for monkey_id, monkey in enumerate(monkeys):
-
-            if not monkey.items:
-                continue
-
-            # On a single monkey's turn, it inspects and throws all of the items it is holding
-            while len(monkey.items) > 0:
-                item = monkey.items.pop(0)
-                monkey.num_inspected += 1
-                old = item
-                new = eval(monkey.operation)
-                worry_level = worry_reducer(new)
-                if worry_level % monkey.div_by == 0:
-                    monkeys[monkey.if_true].items.append(worry_level)
-                else:
-                    monkeys[monkey.if_false].items.append(worry_level)
+        monkeys = monkeys_throw_items(monkeys, worry_reducer)
 
     # you're going to have to focus on the two most active monkeys
     # Count the total number of times each monkey inspects items
@@ -52,9 +55,31 @@ def monkeys_round(monkeys, num_rounds, worry_reducer) -> Iterator[Optional[int]]
     return inspected[0] * inspected[1]
 
 
+# memoize
+# @lru_cache(maxsize=None)
+def monkeys_throw_items(monkeys, worry_reducer):
+    for monkey_id, monkey in enumerate(monkeys):
+        if not monkey.items:
+            continue
+
+            # On a single monkey's turn, it inspects and throws all of the items it is holding
+        while len(monkey.items) > 0:
+            item = monkey.items.pop(0)
+            monkey.num_inspected += 1
+            old = item
+            new = eval(monkey.operation)
+            worry_level = worry_reducer(new)
+            if worry_level % monkey.div_by == 0:
+                monkeys[monkey.if_true].items.append(worry_level)
+            else:
+                monkeys[monkey.if_false].items.append(worry_level)
+
+    return monkeys
+
+
 def compute(file) -> Iterator[Optional[int]]:
 
-    monkeys: List[Monkey] = parse_monkey_def(file)
+    monkeys: Monkeys = parse_monkey_def(file)
 
     # After each monkey inspects an item but before it tests your worry level,
     # your relief that the monkey's inspection didn't damage the item causes
@@ -67,7 +92,7 @@ def compute(file) -> Iterator[Optional[int]]:
     yield monkeys_round(monkeys, 10000, lambda x: x % div_by_tot)
 
 
-def parse_monkey_def(file) -> List[Monkey]:
+def parse_monkey_def(file) -> Monkeys:
     with open(file) as f:
         monkeys_lines = f.read().split("\n\n")
 
@@ -90,7 +115,7 @@ def parse_monkey_def(file) -> List[Monkey]:
         if_true = int(lines[4].split("monkey")[1])
         if_false = int(lines[5].split("monkey")[1])
         monkeys.append(Monkey(monkey_id, starting_items, operation, div_by, if_true, if_false))
-    return monkeys
+    return Monkeys(monkeys)
 
 
 @print_durations
