@@ -22,33 +22,28 @@ def maze_to_val(maze_char):
 @print_durations
 def compute(file) -> Iterator[Optional[int]]:
 
-    # a map of risk level throughout the cave
-    data = []
     with open(file, "r") as f:
-        for line in f:
-            data.append(list(line.strip()))
-
-    maze = np.array(data)
+        maze = np.array([list(x) for x in f.read().splitlines()])
 
     graph = nx.grid_2d_graph(*maze.shape).to_directed()
 
-    for u, v, data in graph.edges(data=True):
+    too_steep = set()
+    for u, v, _ in graph.edges(data=True):
         diff = maze_to_val(maze[v[0], v[1]]) - maze_to_val(maze[u[0], u[1]])
         if diff > 1:
-            data["step"] = 1000
-        else:
-            data["step"] = 1
+            too_steep.add((u, v))
+
+    graph.remove_edges_from(too_steep)
 
     source = tuple(np.argwhere(maze == "S")[0])
-    # find "E" in maze
     target = tuple(np.argwhere(maze == "E")[0])
 
-    yield nx.dijkstra_path_length(graph, source, target, weight="step")
+    s_t_len = nx.dijkstra_path_length(graph, source, target)
+    yield s_t_len
 
-    # all points in maze with value "a"
     sources = [tuple(x) for x in np.argwhere(maze == "a")]
     sources.append(source)
-    msd = nx.multi_source_dijkstra(graph, sources, target, weight="step", cutoff=1000)
+    msd = nx.multi_source_dijkstra(graph, sources, target, cutoff=s_t_len)
 
     yield msd[0]
 
