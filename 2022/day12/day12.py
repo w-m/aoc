@@ -1,12 +1,9 @@
 import os.path
-from collections import *
-from copy import copy
 from typing import Iterator, List, Optional
 
-import numpy as np
-import pandas as pd
-from funcy import print_durations
 import networkx as nx
+import numpy as np
+from funcy import print_durations
 
 # https://adventofcode.com/2022/day/12
 
