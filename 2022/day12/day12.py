@@ -38,7 +38,7 @@ def compute(file) -> Iterator[Optional[int]]:
     source = tuple(np.argwhere(maze == "S")[0])
     target = tuple(np.argwhere(maze == "E")[0])
 
-    s_t_len = nx.dijkstra_path_length(graph, source, target)
+    s_t_len = nx.shortest_path_length(graph, source, target)
     yield s_t_len
 
     sources = [tuple(x) for x in np.argwhere(maze == "a")]
