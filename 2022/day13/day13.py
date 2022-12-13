@@ -1,39 +1,33 @@
 import os.path
-from collections import *
-from copy import copy
 from typing import Iterator, List, Optional
 
-import numpy as np
-import pandas as pd
 from funcy import print_durations
 from functools import cmp_to_key
 
-# https://adventofcode.com/2022/day/xx
+# https://adventofcode.com/2022/day/13
 
 
 def compare(a, b):
-    # return True if in right order
-    # both values are int? a should be lower
+
     if isinstance(a, int) and isinstance(b, int):
-        if a < b:
-            return -1
-        if a == b:
-            return 0
-        if a > b:
-            return 1
-    # both are lists? compare each element
+        # the lower integer should come first
+        return a - b
+
     if isinstance(a, list) and isinstance(b, list):
         # zip
         for a_, b_ in zip(a, b):
             res = compare(a_, b_)
+            # If the lists are the same length and no comparison makes a decision
+            # about the order, continue checking the next part of the input
             if res != 0:
                 return res
 
+        # If the left list runs out of items first, the inputs are in the right order
         return compare(len(a), len(b))
-    # a is list, b is int? make b a singleton list
+
     if isinstance(a, list) and isinstance(b, int):
         return compare(a, [b])
-    # a is int, b is list? make a a singleton list
+
     if isinstance(a, int) and isinstance(b, list):
         return compare([a], b)
 
@@ -46,27 +40,26 @@ def compute(file) -> Iterator[Optional[int]]:
 
     packets = []
 
+    # what is the sum of the indices of the packets that are in order?
     osum = 0
     for idx, pair_str in enumerate(pairs, start=1):
-        p0, p1 = pair_str.split("\n")
-        p0 = eval(p0)
-        p1 = eval(p1)
-        res = compare(p0, p1)
-        print(f"{idx}: {res} \t {p0} - {p1}")
-        if res == -1:
+        a, b = pair_str.split("\n")
+        a, b = eval(a), eval(b)
+        if compare(a, b) < 0:
             osum += idx
-        packets.append(p0)
-        packets.append(p1)
+        packets.extend((a, b))
 
     yield osum
 
-    s0 = [[2]]
-    s1 = [[6]]
+    # special packets for part 2
+    s0, s1 = [[2]], [[6]]
+    packets.extend((s0, s1))
 
-    packets.append(s0)
-    packets.append(s1)
-
+    # Organize all of the packets into the correct order
     ps = sorted(packets, key=cmp_to_key(compare))
+
+    # determine the indices of the two divider packets
+    # and multiply them together
     yield (ps.index(s0) + 1) * (ps.index(s1) + 1)
 
 
