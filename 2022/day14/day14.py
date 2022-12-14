@@ -1,15 +1,11 @@
+import itertools
 import os.path
-from collections import *
-from copy import copy
 from typing import Iterator, List, Optional
 
 import numpy as np
-import pandas as pd
 from funcy import print_durations
 
 # https://adventofcode.com/2022/day/14
-
-import itertools
 
 
 def pairwise(iterable):
@@ -31,15 +27,15 @@ def falling_sand(area, bounds):
         sy = 0
 
         # Sand is produced one unit at a time
-        #  and the next unit of sand is not produced until the previous unit of sand comes to rest
-
+        # and the next unit of sand is not produced until the previous unit of sand comes to rest
         while True:
 
+            # would fall out of bounds
             if sy == area.shape[0] - 1:
                 return
 
-            # A unit of sand always falls down one step if possible
             if area[sy + 1, sx] == 0:
+                # A unit of sand always falls down one step if possible
                 sy += 1
             elif area[sy + 1, sx - 1] == 0:
                 # If the tile immediately below is blocked (by rock or sand),
@@ -57,6 +53,7 @@ def falling_sand(area, bounds):
                 area[sy, sx] = 2
 
                 if sy == 0:
+                    # Sand not falling anymore, source of the sand becomes blocked
                     return
 
                 break
@@ -68,17 +65,16 @@ def read_walls(file):
     with open(file) as f:
         lines = f.read().splitlines()
 
-    # parse input walls:
-    # 498,4 -> 498,6 -> 496,6
-    # 503,4 -> 502,4 -> 502,9 -> 494,9
-
+    # x0, x1, y0, y1
     bounds = []
-    #  x,y coordinates that form the shape of the path
-
-    # x represents distance to the right and y represents distance down
 
     walls = []
     for line in lines:
+        # parse input walls:
+        # x,y coordinates that form the shape of the path
+        # x represents distance to the right and y represents distance down
+        # 498,4 -> 498,6 -> 496,6
+        # 503,4 -> 502,4 -> 502,9 -> 494,9
         segments = line.split(" -> ")
         wall = [tuple(map(int, segment.split(","))) for segment in segments]
         walls.append(wall)
@@ -92,14 +88,13 @@ def read_walls(file):
 
         if bounds == []:
             bounds = wall_bounds
-            continue
-
-        bounds = [
-            min(bounds[0], wall_bounds[0]),
-            max(bounds[1], wall_bounds[1]),
-            min(bounds[2], wall_bounds[2]),
-            max(bounds[3], wall_bounds[3]),
-        ]
+        else:
+            bounds = [
+                min(bounds[0], wall_bounds[0]),
+                max(bounds[1], wall_bounds[1]),
+                min(bounds[2], wall_bounds[2]),
+                max(bounds[3], wall_bounds[3]),
+            ]
 
     return walls, bounds
 
@@ -126,31 +121,33 @@ def compute(file) -> Iterator[Optional[int]]:
 
     walls, bounds = read_walls(file)
 
-    # The sand is pouring into the cave from point 500,0.
-    bounds[0] -= 1
-    bounds[1] += 1
-    bounds[2] = 0
-    bounds[3] += 1
+    # The sand is pouring into the cave from point 500,0
+    bounds[0] -= 1  # x0
+    bounds[1] += 1  # x1
+    bounds[2] = 0  # y0
+    bounds[3] += 1  # y1
 
     area = gen_area(walls, bounds)
-
-    # How many units of sand come to rest before sand starts flowing into the abyss below
     falling_sand(area, bounds)
 
     yield np.count_nonzero(area == 2)
 
     height = area.shape[0]
 
-    # The sand is pouring into the cave from point 500,0.
-    bounds[0] = 500 - (height + 1)
-    bounds[1] = 500 + (height + 1)
-    bounds[2] = 0
-    bounds[3] = height + 1
+    # sand falls into triangle before it comes to rest,
+    # -> grow bounds to include the triangle
+    bounds[0] = 500 - (height + 1)  # x0
+    bounds[1] = 500 + (height + 1)  # x1
+
+    # source
+    bounds[2] = 0  # y0
+
+    bounds[3] = height + 1  # floor
 
     area = gen_area(walls, bounds)
 
-    # You don't have time to scan the floor, so assume the floor is an infinite horizontal line with
-    # a y coordinate equal to two plus the highest y coordinate of any point in your scan
+    # assume the floor is an infinite horizontal line
+    # with a y coordinate equal to two plus the highest y coordinate of any point in your scan
     area[bounds[3] - 1, :] = 1
 
     falling_sand(area, bounds)
